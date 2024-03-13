@@ -6,17 +6,16 @@
 #include "bsp.h"
 
 
-#define _DEF_FIRMWATRE_VERSION    "V231028R1"
-#define _DEF_BOARD_NAME           "NUCLEO-U5-FW"
+#define _DEF_FIRMWATRE_VERSION    "V240313R1"
+#define _DEF_BOARD_NAME           "BARAM-HS-K-FW"
 
 
 #define _USE_HW_LED
 #define      HW_LED_MAX_CH          3
 
 #define _USE_HW_UART
-#define      HW_UART_MAX_CH         2
+#define      HW_UART_MAX_CH         1
 #define      HW_UART_CH_SWD         _DEF_UART1
-#define      HW_UART_CH_USB         _DEF_UART2
 
 #define _USE_HW_CLI
 #define      HW_CLI_CMD_LIST_MAX    32
@@ -34,9 +33,9 @@
 #define      HW_LOG_LIST_BUF_MAX    4096
 
 #define _USE_HW_USB
-#define _USE_HW_CDC
-#define      HW_USE_CDC             1
+#define      HW_USE_CDC             0
 #define      HW_USE_MSC             0
+#define      HW_USE_HID             1
 
 
 #endif

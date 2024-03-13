@@ -34,11 +34,17 @@ extern "C" {
 #include "usbd_msc.h"
 #endif
 
+#if HW_USE_HID == 1
+#include "usbd_hid.h"
+// #include "usbd_hid_if.h"
+#endif
+
 typedef enum UsbMode
 {
   USB_NON_MODE,
   USB_CDC_MODE,
-  USB_MSC_MODE
+  USB_MSC_MODE,
+  USB_HID_MODE,
 } UsbMode_t;
 
 typedef enum UsbType
@@ -47,6 +53,7 @@ typedef enum UsbType
   USB_CON_CLI = 1,
   USB_CON_CAN = 2,
   USB_CON_ESP = 3,
+  USB_CON_HID = 4,
 } UsbType_t;
 
 bool usbInit(void);

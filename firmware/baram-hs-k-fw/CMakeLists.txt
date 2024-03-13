@@ -75,6 +75,7 @@ target_include_directories(${EXECUTABLE} PRIVATE
 
   src/hw/driver/usb
   src/hw/driver/usb/usb_cdc
+  src/hw/driver/usb/usb_hid
 
   src/lib/ST/CMSIS/Include
   src/lib/ST/CMSIS/Device/ST/STM32U5xx/Include
@@ -99,7 +100,7 @@ target_compile_options(${EXECUTABLE} PRIVATE
   -fstack-usage 
   -Wmissing-field-initializers
   -Wuninitialized 
-  -Wenum-conversion
+  # -Wenum-conversion
 
   -Wall
   -g3
@@ -125,7 +126,7 @@ target_link_options(${EXECUTABLE} PRIVATE
   -Xlinker -print-memory-usage -Xlinker
   )
 
-
+set (CMAKE_C_FLAGS "-Wenum-conversion")
 set (CMAKE_CXX_FLAGS "-fno-rtti")
 
 

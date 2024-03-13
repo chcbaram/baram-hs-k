@@ -22,9 +22,7 @@ extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 
 
 extern USBD_DescriptorsTypeDef MSC_Desc;
-#if HW_USE_MSC == 1
-extern USBD_StorageTypeDef USBD_DISK_fops;
-#endif
+extern USBD_DescriptorsTypeDef HID_Desc;
 
 #ifdef _USE_HW_CLI
 static void cliCmd(cli_args_t *args);
@@ -47,6 +45,7 @@ bool usbBegin(UsbMode_t usb_mode)
 
   if (usb_mode == USB_CDC_MODE)
   {
+    #if HW_USE_CDC == 1    
     /* Init Device Library */
     USBD_Init(&USBD_Device, &VCP_Desc, DEVICE_HS);
 
@@ -65,6 +64,7 @@ bool usbBegin(UsbMode_t usb_mode)
     
     logPrintf("[OK] usbBegin()\n");
     logPrintf("     USB_CDC\r\n");
+    #endif
   }
   else if (usb_mode == USB_MSC_MODE)
   {
@@ -89,6 +89,22 @@ bool usbBegin(UsbMode_t usb_mode)
     logPrintf("     USB_MSC\r\n");
     #endif
   }
+  else if (usb_mode == USB_HID_MODE)
+  {
+    /* Init Device Library */
+    USBD_Init(&USBD_Device, &HID_Desc, DEVICE_HS);
+
+    /* Add Supported Class */
+    USBD_RegisterClass(&USBD_Device, USBD_HID_CLASS);
+
+    /* Start Device Process */
+    USBD_Start(&USBD_Device);
+
+    is_usb_mode = USB_HID_MODE;
+    
+    logPrintf("[OK] usbBegin()\n");
+    logPrintf("     USB_HID\r\n");
+  }  
   else
   {
     is_init = false;
@@ -109,7 +125,11 @@ void usbDeInit(void)
 
 bool usbIsOpen(void)
 {
+  #if HW_USE_CDC == 1
   return cdcIsConnect();
+  #else
+  return false;
+  #endif
 }
 
 bool usbIsConnect(void)
@@ -141,7 +161,13 @@ UsbMode_t usbGetMode(void)
 
 UsbType_t usbGetType(void)
 {
+#if HW_USE_CDC == 1  
   return (UsbType_t)cdcGetType();
+#elif HW_USE_KBD == 1
+  return USB_CON_KBD;
+#else
+  return USB_CON_CDC;
+#endif
 }
 
 void OTG_HS_IRQHandler(void)
@@ -170,7 +196,7 @@ void cliCmd(cli_args_t *args)
 
     ret = true;
   }
-
+#if HW_USE_CDC == 1
   if (args->argc == 1 && args->isStr(0, "tx") == true)
   {
     uint32_t pre_time;
@@ -223,12 +249,15 @@ void cliCmd(cli_args_t *args)
 
     ret = true;
   }
+#endif
 
   if (ret == false)
   {
     cliPrintf("usb info\n");
+    #if HW_USE_CDC == 1
     cliPrintf("usb tx\n");
     cliPrintf("usb rx\n");
+    #endif
   }
 }
 #endif

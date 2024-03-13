@@ -1,7 +1,7 @@
 #include "uart.h"
 #include "qbuffer.h"
 #include "cli.h"
-#ifdef _USE_HW_USB
+#if HW_USE_CDC == 1
 #include "cdc.h"
 #endif
 
@@ -54,7 +54,7 @@ static DMA_HandleTypeDef handle_GPDMA1_Channel0;
 const static uart_hw_t uart_hw_tbl[UART_MAX_CH] = 
   {
     {"USART1 SWD   ", USART1, &huart1, false},
-    {"USB          ", NULL,   NULL   , false},
+    // {"USB          ", NULL,   NULL   , false},
   };
 
 
@@ -186,7 +186,7 @@ uint32_t uartAvailable(uint8_t ch)
       break;
 
     case _DEF_UART2:
-      #ifdef _USE_HW_USB
+      #if HW_USE_CDC == 1
       ret = cdcAvailable();
       #endif
       break;      
@@ -225,7 +225,7 @@ uint8_t uartRead(uint8_t ch)
       break;
 
     case _DEF_UART2:
-      #ifdef _USE_HW_USB
+      #if HW_USE_CDC == 1
       ret = cdcRead();
       #endif
       break;      
@@ -250,7 +250,7 @@ uint32_t uartWrite(uint8_t ch, uint8_t *p_data, uint32_t length)
       break;
 
     case _DEF_UART2:
-      #ifdef _USE_HW_USB
+      #if HW_USE_CDC == 1
       ret = cdcWrite(p_data, length);
       #endif
       break;      
@@ -285,7 +285,7 @@ uint32_t uartGetBaud(uint8_t ch)
 
   if (ch >= UART_MAX_CH) return 0;
 
-  #ifdef _USE_HW_USB
+  #if HW_USE_CDC == 1
   if (ch == HW_UART_CH_USB)
     ret = cdcGetBaud();
   else
