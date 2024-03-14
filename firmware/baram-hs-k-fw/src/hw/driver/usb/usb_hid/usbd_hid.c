@@ -69,6 +69,10 @@ static uint8_t *USBD_HID_GetDeviceQualifierDesc(uint16_t *length);
 static void cliCmd(cli_args_t *args);
 
 
+static USBD_SetupReqTypedef ep0_req;
+static uint8_t ep0_req_buf[USB_MAX_EP0_SIZE];
+
+
 USBD_ClassTypeDef USBD_HID =
 {
   USBD_HID_Init,
@@ -382,31 +386,33 @@ static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *re
       switch (req->bRequest)
       {
         case USBD_HID_REQ_SET_PROTOCOL:
-          logDebug("  USBD_HID_REQ_SET_PROTOCOL  : 0x%X\n", req->wValue); 
+          logDebug("  USBD_HID_REQ_SET_PROTOCOL  : 0x%X, 0x%d\n", req->wValue, req->wLength);      
           hhid->Protocol = (uint8_t)(req->wValue);
           break;
 
         case USBD_HID_REQ_GET_PROTOCOL:
-          logDebug("  USBD_HID_REQ_GET_PROTOCOL  : 0x%X\n", req->wValue); 
+          logDebug("  USBD_HID_REQ_GET_PROTOCOL  : 0x%X, 0x%d\n", req->wValue, req->wLength);      
           (void)USBD_CtlSendData(pdev, (uint8_t *)&hhid->Protocol, 1U);
           break;
 
         case USBD_HID_REQ_SET_IDLE:
-          logDebug("  USBD_HID_REQ_SET_IDLE  : 0x%X\n", req->wValue); 
+          logDebug("  USBD_HID_REQ_SET_IDLE  : 0x%X, 0x%d\n", req->wValue, req->wLength);      
           hhid->IdleState = (uint8_t)(req->wValue >> 8);
           break;
 
         case USBD_HID_REQ_GET_IDLE:
-          logDebug("  USBD_HID_REQ_GET_IDLE  : 0x%X\n", req->wValue);     
+          logDebug("  USBD_HID_REQ_GET_IDLE  : 0x%X, 0x%d\n", req->wValue, req->wLength);          
           (void)USBD_CtlSendData(pdev, (uint8_t *)&hhid->IdleState, 1U);
           break;
 
         case USBD_HID_REQ_SET_REPORT:  
-          logDebug("  USBD_HID_REQ_SET_REPORT  : 0x%X\n", req->wValue);     
+          logDebug("  USBD_HID_REQ_SET_REPORT  : 0x%X, 0x%d\n", req->wValue, req->wLength);     
           {   
             const uint8_t hid_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
             USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8);                
           }
+          ep0_req = *req;
+          USBD_CtlPrepareRx(pdev, ep0_req_buf, req->wLength);
           break;
 
         default:
@@ -508,6 +514,14 @@ static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *re
 uint8_t USBD_HID_EP0_RxReady(USBD_HandleTypeDef *pdev)
 {
   logPrintf("USBD_HID_EP0_RxReady()\n");
+  logDebug("  req->bmRequest : 0x%X\n", ep0_req.bmRequest);
+  logDebug("  req->bRequest  : 0x%X\n", ep0_req.bRequest);
+  logPrintf("  %d \n", ep0_req.wLength);
+  for (int i=0; i<ep0_req.wLength; i++)
+  {
+    logPrintf("  %d : 0x%02X\n", i, ep0_req_buf[i]);
+  }
+
   return (uint8_t)USBD_OK;
 }
 
@@ -709,7 +723,6 @@ static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 uint8_t USBD_HID_SOF(USBD_HandleTypeDef *pdev)
 {
   static uint32_t cnt = 0; 
-
 
   if (cnt >= 8000)
   {
