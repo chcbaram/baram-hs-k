@@ -129,7 +129,7 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
       HAL_SYSCFG_EnableOTGPHY(SYSCFG_OTG_HS_PHY_ENABLE);
 
     /* Peripheral interrupt init */
-    HAL_NVIC_SetPriority(OTG_HS_IRQn, 6, 0);
+    HAL_NVIC_SetPriority(OTG_HS_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
   }
 }

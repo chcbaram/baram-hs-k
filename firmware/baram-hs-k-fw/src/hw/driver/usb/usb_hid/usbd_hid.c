@@ -142,7 +142,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ] __ALIGN_E
 
   HID_EPIN_ADDR,                                      /* bEndpointAddress: Endpoint Address (IN) */
   0x03,                                               /* bmAttributes: Interrupt endpoint */
-  HID_EPIN_SIZE,                                      /* wMaxPacketSize: 4 Bytes max */
+  HID_EPIN_SIZE,                                      /* wMaxPacketSize: */
   0x00,
   HID_HS_BINTERVAL,                                   /* bInterval: Polling Interval */
   /* 34 */
@@ -630,8 +630,15 @@ static uint8_t *USBD_HID_GetOtherSpeedCfgDesc(uint16_t *length)
 }
 #endif /* USE_USBD_COMPOSITE  */
 
-uint32_t data_in_cnt = 0;
-uint32_t data_in_rate = 0;
+static uint32_t data_in_cnt = 0;
+static uint32_t data_in_rate = 0;
+
+static uint32_t rate_time_pre = 0;
+static uint32_t rate_time_us  = 0;
+static uint32_t rate_time_min = 0xFFFF; 
+static uint32_t rate_time_max = 0; 
+
+static uint16_t rate_his_buf[100];
 
 /**
   * @brief  USBD_HID_DataIn
@@ -651,9 +658,29 @@ static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
   static uint8_t hid_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
   USBD_HID_SendReport(pdev, hid_buf, 8);  
-
-
   data_in_cnt++;
+
+  uint32_t rate_time_cur;
+  
+  rate_time_cur = micros();
+  rate_time_us  = rate_time_cur - rate_time_pre;
+  if (rate_time_min > rate_time_us)
+  {
+    rate_time_min = rate_time_us;
+  }
+  if (rate_time_max < rate_time_us)
+  {
+    rate_time_max = rate_time_us;
+  }
+  rate_time_pre = rate_time_cur;
+
+  uint32_t rate_time_idx;
+
+  rate_time_idx = constrain(rate_time_us/10, 0, 99);
+  if (rate_his_buf[rate_time_idx] < 0xFFFF)
+  {
+    rate_his_buf[rate_time_idx]++;
+  }
 
   return (uint8_t)USBD_OK;
 }
@@ -661,6 +688,7 @@ static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 uint8_t USBD_HID_SOF(USBD_HandleTypeDef *pdev)
 {
   static uint32_t cnt = 0; 
+
 
   if (cnt >= 8000)
   {
@@ -701,9 +729,13 @@ void cliCmd(cli_args_t *args)
     ret = true;
   }
 
-  if (args->argc == 1 && args->isStr(0, "rate") == true)
+  if (args->argc >= 1 && args->isStr(0, "rate") == true)
   {
     uint32_t pre_time;
+
+    rate_time_max = 0;
+    rate_time_min = 0xFFFF;
+    memset(rate_his_buf, 0, sizeof(rate_his_buf));
 
     pre_time = millis();
     while(cliKeepLoop())
@@ -711,10 +743,20 @@ void cliCmd(cli_args_t *args)
       if (millis()-pre_time >= 1000)
       {
         pre_time = millis();
-        logPrintf("hid rate %d\n", data_in_rate); 
+        cliPrintf("hid rate %d, max %d us, min %d us\n", 
+          data_in_rate,
+          rate_time_max,
+          rate_time_min); 
       }
     }
 
+    if (args->argc == 2 && args->isStr(1, "his"))
+    {
+      for (int i=0; i<100; i++)
+      {
+        cliPrintf("%d %d\n", i, rate_his_buf[i]);
+      }
+    }
     ret = true;
   }
 
@@ -723,6 +765,7 @@ void cliCmd(cli_args_t *args)
   {
     cliPrintf("usbhid info\n");
     cliPrintf("usbhid rate\n");
+    cliPrintf("usbhid rate his\n");
   }
 }
 #endif

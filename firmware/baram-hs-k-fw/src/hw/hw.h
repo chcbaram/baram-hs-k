@@ -14,6 +14,7 @@ extern "C" {
 #include "log.h"
 #include "usb.h"
 #include "cdc.h"
+#include "micros.h"
 
 
 bool hwInit(void);

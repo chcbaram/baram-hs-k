@@ -19,7 +19,8 @@ bool hwInit(void)
   cliInit();
   logInit();  
   ledInit();
-
+  microsInit();
+  
   uartInit();
   for (int i=0; i<HW_UART_MAX_CH; i++)
   {

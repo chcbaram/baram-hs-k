@@ -10,6 +10,8 @@
 #define _DEF_BOARD_NAME           "BARAM-HS-K-FW"
 
 
+#define _USE_HW_MICROS
+
 #define _USE_HW_LED
 #define      HW_LED_MAX_CH          3
 
