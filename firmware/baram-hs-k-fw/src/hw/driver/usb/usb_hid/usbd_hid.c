@@ -41,6 +41,15 @@
 
 #include "usbd_hid.h"
 #include "usbd_ctlreq.h"
+#include "cli.h"
+
+
+
+#if HW_USB_LOG == 1
+#define logDebug(...) logPrintf(__VA_ARGS__)
+#else
+#define logDebug(...) 
+#endif
 
 
 static uint8_t USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
@@ -56,6 +65,8 @@ static uint8_t *USBD_HID_GetHSCfgDesc(uint16_t *length);
 static uint8_t *USBD_HID_GetOtherSpeedCfgDesc(uint16_t *length);
 static uint8_t *USBD_HID_GetDeviceQualifierDesc(uint16_t *length);
 #endif /* USE_USBD_COMPOSITE  */
+
+static void cliCmd(cli_args_t *args);
 
 
 USBD_ClassTypeDef USBD_HID =
@@ -170,7 +181,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_
 };
 #endif /* USE_USBD_COMPOSITE  */
 
-#if 1
+#if 0
 __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE] __ALIGN_END =
 {
   0x05, 0x01,        /* Usage Page (Generic Desktop Ctrls)     */
@@ -297,6 +308,16 @@ static uint8_t USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 
   hhid->state = USBD_HID_IDLE;
 
+
+  static bool is_cli = false;
+  if (is_cli == false)
+  {
+    is_cli = true;
+
+    logPrintf("[OK] usb hid - keyboard\n");
+    cliAdd("usbhid", cliCmd);
+  }
+
   return (uint8_t)USBD_OK;
 }
 
@@ -351,8 +372,8 @@ static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *re
     return (uint8_t)USBD_FAIL;
   }
 
-  logPrintf("req->bmRequest : 0x%X\n", req->bmRequest);
-  logPrintf("req->bRequest  : 0x%X\n", req->bRequest);
+  logDebug("req->bmRequest : 0x%X\n", req->bmRequest);
+  logDebug("req->bRequest  : 0x%X\n", req->bRequest);
 
   switch (req->bmRequest & USB_REQ_TYPE_MASK)
   {
@@ -376,10 +397,10 @@ static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *re
           break;
 
         case USBD_HID_REQ_SET_REPORT:  
-          logPrintf("SET_REPORT  : 0x%X\n", req->wValue);     
+          logDebug("SET_REPORT  : 0x%X\n", req->wValue);     
           {   
-            uint8_t hid_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-            USBD_HID_SendReport(pdev, hid_buf, 8);                
+            const uint8_t hid_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+            USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8);                
           }
           break;
 
@@ -627,30 +648,27 @@ static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
   ((USBD_HID_HandleTypeDef *)pdev->pClassDataCmsit[pdev->classId])->state = USBD_HID_IDLE;
 
 
-  uint8_t hid_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  static uint8_t hid_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
   USBD_HID_SendReport(pdev, hid_buf, 8);  
 
 
-  static uint32_t pre_time = 0; 
-
-  if (millis()-pre_time >= 1000)
-  {
-    pre_time = millis();
-    data_in_rate = data_in_cnt;
-    data_in_cnt = 0;
-  }
   data_in_cnt++;
-
 
   return (uint8_t)USBD_OK;
 }
 
 uint8_t USBD_HID_SOF(USBD_HandleTypeDef *pdev)
 {
-  // uint8_t hid_buf[8] = {0, };
+  static uint32_t cnt = 0; 
 
-  // USBD_HID_SendReport(pdev, hid_buf, 8);  
+  if (cnt >= 8000)
+  {
+    cnt = 0;
+    data_in_rate = data_in_cnt;
+    data_in_cnt = 0;
+  }  
+  cnt++;
 
   return (uint8_t)USBD_OK;
 }
@@ -669,3 +687,42 @@ static uint8_t *USBD_HID_GetDeviceQualifierDesc(uint16_t *length)
   return USBD_HID_DeviceQualifierDesc;
 }
 #endif /* USE_USBD_COMPOSITE  */
+
+
+
+
+#ifdef _USE_HW_CLI
+void cliCmd(cli_args_t *args)
+{
+  bool ret = false;
+
+  if (args->argc == 1 && args->isStr(0, "info") == true)
+  {
+    ret = true;
+  }
+
+  if (args->argc == 1 && args->isStr(0, "rate") == true)
+  {
+    uint32_t pre_time;
+
+    pre_time = millis();
+    while(cliKeepLoop())
+    {
+      if (millis()-pre_time >= 1000)
+      {
+        pre_time = millis();
+        logPrintf("hid rate %d\n", data_in_rate); 
+      }
+    }
+
+    ret = true;
+  }
+
+
+  if (ret == false)
+  {
+    cliPrintf("usbhid info\n");
+    cliPrintf("usbhid rate\n");
+  }
+}
+#endif

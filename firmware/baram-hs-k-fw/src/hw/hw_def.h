@@ -33,6 +33,7 @@
 #define      HW_LOG_LIST_BUF_MAX    4096
 
 #define _USE_HW_USB
+#define      HW_USB_LOG             1
 #define      HW_USE_CDC             0
 #define      HW_USE_MSC             0
 #define      HW_USE_HID             1

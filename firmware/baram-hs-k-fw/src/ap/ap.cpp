@@ -2,8 +2,6 @@
 
 
 
-extern uint32_t data_in_rate;
-extern USBD_HandleTypeDef USBD_Device;
 
 void apInit(void)
 {  
@@ -22,11 +20,6 @@ void apMain(void)
     {
       pre_time = millis();
       ledToggle(_DEF_LED1);
-      logPrintf("rate %d\n", data_in_rate);
-
-      // uint8_t hid_buf[4] = {0, };
-
-      // USBD_HID_SendReport(&USBD_Device, hid_buf, 4);        
     }
 
     cliMain();
