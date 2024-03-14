@@ -392,9 +392,9 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   
   //-- FIFO SIZE : 4KB
   //
-  HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_HS,    1024);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 0, 512);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 1, 512);
+  HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_HS,    512);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 0, 128);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 1, 128);
   
   }
   return USBD_OK;
