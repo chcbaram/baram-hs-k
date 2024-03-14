@@ -42,7 +42,7 @@
 #include "usbd_hid.h"
 #include "usbd_ctlreq.h"
 #include "cli.h"
-
+#include "button.h"
 
 
 #if HW_USB_LOG == 1
@@ -656,6 +656,16 @@ static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 
 
   static uint8_t hid_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+
+  if (buttonGetPressed(_DEF_BUTTON1))
+  {
+    hid_buf[2] = 0x04; // a
+  }
+  else
+  {
+    hid_buf[2] = 0x00;
+  }
 
   USBD_HID_SendReport(pdev, hid_buf, 8);  
   data_in_cnt++;

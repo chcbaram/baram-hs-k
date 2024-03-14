@@ -8,6 +8,8 @@ extern "C" {
 #include "hw_def.h"
 
 
+#define CLI_USE(module)       ((_USE_CLI_ ## module) && defined(_USE_HW_CLI))
+
 #ifdef _USE_HW_CLI
 
 #define CLI_CMD_LIST_MAX      HW_CLI_CMD_LIST_MAX
@@ -45,6 +47,9 @@ uint32_t cliAvailable(void);
 uint8_t  cliRead(void);
 uint32_t cliWrite(uint8_t *p_data, uint32_t length);
 bool cliRunStr(const char *fmt, ...);
+void cliShowCursor(bool visibility);
+void cliMoveUp(uint8_t y);
+void cliMoveDown(uint8_t y);
 
 #endif
 

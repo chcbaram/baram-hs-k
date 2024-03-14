@@ -824,4 +824,26 @@ void cliMemoryDump(cli_args_t *args)
   }
 }
 
+void cliShowCursor(bool visibility)
+{
+  if (visibility == false)
+  {
+    cliPrintf("\033[?25l");
+  }
+  else
+  {
+    cliPrintf("\033[?25h");
+  }
+}
+
+void cliMoveUp(uint8_t y)
+{
+  cliPrintf("\x1B[%dA", y);
+}
+
+void cliMoveDown(uint8_t y)
+{
+  cliPrintf("\x1B[%dB", y);
+}
+
 #endif

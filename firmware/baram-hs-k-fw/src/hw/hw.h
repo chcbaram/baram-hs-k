@@ -15,6 +15,7 @@ extern "C" {
 #include "usb.h"
 #include "cdc.h"
 #include "micros.h"
+#include "button.h"
 
 
 bool hwInit(void);

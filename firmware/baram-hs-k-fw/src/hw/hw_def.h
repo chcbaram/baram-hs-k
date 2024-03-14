@@ -19,6 +19,9 @@
 #define      HW_UART_MAX_CH         1
 #define      HW_UART_CH_SWD         _DEF_UART1
 
+#define _USE_HW_BUTTON
+#define      HW_BUTTON_MAX_CH       1
+
 #define _USE_HW_CLI
 #define      HW_CLI_CMD_LIST_MAX    32
 #define      HW_CLI_CMD_NAME_MAX    16
@@ -39,6 +42,11 @@
 #define      HW_USE_CDC             0
 #define      HW_USE_MSC             0
 #define      HW_USE_HID             1
+
+
+//-- CLI
+//
+#define _USE_CLI_HW_BUTTON          1
 
 
 #endif
