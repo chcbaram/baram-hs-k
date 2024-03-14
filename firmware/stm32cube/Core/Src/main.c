@@ -22,6 +22,7 @@
 #include "icache.h"
 #include "memorymap.h"
 #include "rtc.h"
+#include "tim.h"
 #include "usart.h"
 #include "usb_otg.h"
 #include "gpio.h"
@@ -96,7 +97,7 @@ int main(void)
   MX_RTC_Init();
   MX_ICACHE_Init();
   MX_USART1_UART_Init();
-  MX_MEMORYMAP_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

@@ -24,23 +24,6 @@
 
 /* USER CODE END 0 */
 
-/* MEMORYMAP init function */
-void MX_MEMORYMAP_Init(void)
-{
-
-  /* USER CODE BEGIN MEMORYMAP_Init 0 */
-
-  /* USER CODE END MEMORYMAP_Init 0 */
-
-  /* USER CODE BEGIN MEMORYMAP_Init 1 */
-
-  /* USER CODE END MEMORYMAP_Init 1 */
-  /* USER CODE BEGIN MEMORYMAP_Init 2 */
-
-  /* USER CODE END MEMORYMAP_Init 2 */
-
-}
-
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
