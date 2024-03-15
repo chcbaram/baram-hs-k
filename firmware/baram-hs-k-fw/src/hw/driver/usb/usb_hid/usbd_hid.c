@@ -376,7 +376,7 @@ static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *re
     return (uint8_t)USBD_FAIL;
   }
 
-  logDebug("HID_SETUP\n");
+  logDebug("HID_SETUP %d\n", pdev->classId);
   logDebug("  req->bmRequest : 0x%X\n", req->bmRequest);
   logDebug("  req->bRequest  : 0x%X\n", req->bRequest);
 
@@ -409,7 +409,11 @@ static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *re
           logDebug("  USBD_HID_REQ_SET_REPORT  : 0x%X, 0x%d\n", req->wValue, req->wLength);     
           {   
             const uint8_t hid_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+            #ifdef USE_USBD_COMPOSITE
+            USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8, pdev->classId);      
+            #else
             USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8);                
+            #endif
           }
           ep0_req = *req;
           USBD_CtlPrepareRx(pdev, ep0_req_buf, req->wLength);
@@ -692,7 +696,11 @@ static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
     hid_buf[2] = 0x00;
   }
 
+  #ifdef USE_USBD_COMPOSITE
+  USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8, pdev->classId);  
+  #else
   USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8);  
+  #endif
   data_in_cnt++;
 
   uint32_t rate_time_cur;

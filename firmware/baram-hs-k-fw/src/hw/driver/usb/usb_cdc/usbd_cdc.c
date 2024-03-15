@@ -50,54 +50,13 @@
   ******************************************************************************
   */
 
-/* BSPDependencies
-- "stm32xxxxx_{eval}{discovery}{nucleo_144}.c"
-- "stm32xxxxx_{eval}{discovery}_io.c"
-EndBSPDependencies */
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc.h"
 #include "usbd_ctlreq.h"
-
-
-/** @addtogroup STM32_USB_DEVICE_LIBRARY
-  * @{
-  */
-
-
-/** @defgroup USBD_CDC
-  * @brief usbd core module
-  * @{
-  */
-
-/** @defgroup USBD_CDC_Private_TypesDefinitions
-  * @{
-  */
-/**
-  * @}
-  */
-
-
-/** @defgroup USBD_CDC_Private_Defines
-  * @{
-  */
-/**
-  * @}
-  */
-
-
-/** @defgroup USBD_CDC_Private_Macros
-  * @{
-  */
-
-/**
-  * @}
-  */
-
-
-/** @defgroup USBD_CDC_Private_FunctionPrototypes
-  * @{
-  */
+#ifdef USE_USBD_COMPOSITE
+#include "usbd_cmp.h"
+#endif
 
 static uint8_t USBD_CDC_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 static uint8_t USBD_CDC_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
@@ -352,7 +311,7 @@ static uint8_t USBD_CDC_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
   hcdc->RxBuffer = NULL;
 
   /* Init  physical Interface components */
-  ((USBD_CDC_ItfTypeDef *)pdev->pUserData[pdev->classId])->Init();
+  ((USBD_CDC_ItfTypeDef *)pdev->pUserData[pdev->classId])->Init(pdev);
 
   /* Init Xfer states */
   hcdc->TxState = 0U;
@@ -414,7 +373,7 @@ static uint8_t USBD_CDC_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
   /* DeInit  physical Interface components */
   if (pdev->pClassDataCmsit[pdev->classId] != NULL)
   {
-    ((USBD_CDC_ItfTypeDef *)pdev->pUserData[pdev->classId])->DeInit();
+    ((USBD_CDC_ItfTypeDef *)pdev->pUserData[pdev->classId])->DeInit(pdev);
     (void)USBD_free(pdev->pClassDataCmsit[pdev->classId]);
     pdev->pClassDataCmsit[pdev->classId] = NULL;
     pdev->pClassData = NULL;
@@ -451,7 +410,7 @@ static uint8_t USBD_CDC_Setup(USBD_HandleTypeDef *pdev,
       {
         if ((req->bmRequest & 0x80U) != 0U)
         {
-          ((USBD_CDC_ItfTypeDef *)pdev->pUserData[pdev->classId])->Control(req->bRequest,
+          ((USBD_CDC_ItfTypeDef *)pdev->pUserData[pdev->classId])->Control(pdev, req->bRequest,
                                                                            (uint8_t *)hcdc->data,
                                                                            req->wLength);
 
@@ -468,7 +427,7 @@ static uint8_t USBD_CDC_Setup(USBD_HandleTypeDef *pdev,
       }
       else
       {
-        ((USBD_CDC_ItfTypeDef *)pdev->pUserData[pdev->classId])->Control(req->bRequest,
+        ((USBD_CDC_ItfTypeDef *)pdev->pUserData[pdev->classId])->Control(pdev, req->bRequest,
                                                                          (uint8_t *)req, 0U);
       }
       break;
@@ -561,7 +520,7 @@ static uint8_t USBD_CDC_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 
     if (((USBD_CDC_ItfTypeDef *)pdev->pUserData[pdev->classId])->TransmitCplt != NULL)
     {
-      ((USBD_CDC_ItfTypeDef *)pdev->pUserData[pdev->classId])->TransmitCplt(hcdc->TxBuffer, &hcdc->TxLength, epnum);
+      ((USBD_CDC_ItfTypeDef *)pdev->pUserData[pdev->classId])->TransmitCplt(pdev, hcdc->TxBuffer, &hcdc->TxLength, epnum);
     }
   }
 
@@ -590,7 +549,7 @@ static uint8_t USBD_CDC_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
   /* USB data will be immediately processed, this allow next USB traffic being
   NAKed till the end of the application Xfer */
 
-  ((USBD_CDC_ItfTypeDef *)pdev->pUserData[pdev->classId])->Receive(hcdc->RxBuffer, &hcdc->RxLength);
+  ((USBD_CDC_ItfTypeDef *)pdev->pUserData[pdev->classId])->Receive(pdev, hcdc->RxBuffer, &hcdc->RxLength);
 
   return (uint8_t)USBD_OK;
 }
@@ -612,7 +571,7 @@ static uint8_t USBD_CDC_EP0_RxReady(USBD_HandleTypeDef *pdev)
 
   if ((pdev->pUserData[pdev->classId] != NULL) && (hcdc->CmdOpCode != 0xFFU))
   {
-    ((USBD_CDC_ItfTypeDef *)pdev->pUserData[pdev->classId])->Control(hcdc->CmdOpCode,
+    ((USBD_CDC_ItfTypeDef *)pdev->pUserData[pdev->classId])->Control(pdev, hcdc->CmdOpCode,
                                                                      (uint8_t *)hcdc->data,
                                                                      (uint16_t)hcdc->CmdLength);
     hcdc->CmdOpCode = 0xFFU;
@@ -736,10 +695,16 @@ uint8_t *USBD_CDC_GetDeviceQualifierDescriptor(uint16_t *length)
 uint8_t USBD_CDC_RegisterInterface(USBD_HandleTypeDef *pdev,
                                    USBD_CDC_ItfTypeDef *fops)
 {
+
+
   if (fops == NULL)
   {
     return (uint8_t)USBD_FAIL;
   }
+
+#ifdef USE_USBD_COMPOSITE
+  pdev->classId = USBD_CMPSIT_GetClassID(pdev, CLASS_TYPE_CDC, 0U);
+#endif
 
   pdev->pUserData[pdev->classId] = fops;
 

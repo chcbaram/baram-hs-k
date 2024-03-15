@@ -12,6 +12,8 @@
 
 
 #ifdef _USE_HW_USB
+#include "usbd_cmp.h"
+#include "usbd_hid.h"
 
 
 static bool is_init = false;
@@ -20,9 +22,17 @@ static UsbMode_t is_usb_mode = USB_NON_MODE;
 USBD_HandleTypeDef USBD_Device;
 extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 
-
+extern USBD_DescriptorsTypeDef VCP_Desc;
 extern USBD_DescriptorsTypeDef MSC_Desc;
 extern USBD_DescriptorsTypeDef HID_Desc;
+extern USBD_DescriptorsTypeDef CMP_Desc;
+
+
+
+static uint8_t hid_ep_tbl[] = {HID_EPIN_ADDR};
+static uint8_t cdc_ep_tbl[] = {CDC_IN_EP, CDC_OUT_EP, CDC_CMD_EP};
+
+
 
 #ifdef _USE_HW_CLI
 static void cliCmd(cli_args_t *args);
@@ -45,7 +55,7 @@ bool usbBegin(UsbMode_t usb_mode)
 
   if (usb_mode == USB_CDC_MODE)
   {
-    #if HW_USE_CDC == 1    
+    #if HW_USB_CDC == 1    
     /* Init Device Library */
     USBD_Init(&USBD_Device, &VCP_Desc, DEVICE_HS);
 
@@ -68,7 +78,7 @@ bool usbBegin(UsbMode_t usb_mode)
   }
   else if (usb_mode == USB_MSC_MODE)
   {
-    #if HW_USE_MSC == 1
+    #if HW_USB_MSC == 1
     /* Init Device Library */
     USBD_Init(&USBD_Device, &MSC_Desc, DEVICE_HS);
 
@@ -91,6 +101,7 @@ bool usbBegin(UsbMode_t usb_mode)
   }
   else if (usb_mode == USB_HID_MODE)
   {
+    #if HW_USB_HID == 1
     /* Init Device Library */
     USBD_Init(&USBD_Device, &HID_Desc, DEVICE_HS);
 
@@ -104,6 +115,28 @@ bool usbBegin(UsbMode_t usb_mode)
     
     logPrintf("[OK] usbBegin()\n");
     logPrintf("     USB_HID\r\n");
+    #endif
+  }  
+  else if (usb_mode == USB_CMP_MODE)
+  { 
+    #if HW_USB_CMP == 1
+    USBD_Init(&USBD_Device, &CMP_Desc, DEVICE_HS);
+
+
+    /* Add Supported Class */
+    USBD_RegisterClassComposite(&USBD_Device, USBD_CDC_CLASS, CLASS_TYPE_CDC, cdc_ep_tbl);
+    USBD_RegisterClassComposite(&USBD_Device, USBD_HID_CLASS, CLASS_TYPE_HID, hid_ep_tbl);
+
+    USBD_CDC_RegisterInterface(&USBD_Device, &USBD_CDC_fops);
+
+    /* Start Device Process */
+    USBD_Start(&USBD_Device);
+
+    is_usb_mode = USB_CDC_MODE;
+    
+    logPrintf("[OK] usbBegin()\n");
+    logPrintf("     USB_CMP\r\n");
+    #endif
   }  
   else
   {
@@ -125,7 +158,7 @@ void usbDeInit(void)
 
 bool usbIsOpen(void)
 {
-  #if HW_USE_CDC == 1
+  #if HW_USB_CDC == 1
   return cdcIsConnect();
   #else
   return false;
@@ -161,7 +194,7 @@ UsbMode_t usbGetMode(void)
 
 UsbType_t usbGetType(void)
 {
-#if HW_USE_CDC == 1  
+#if HW_USB_CDC == 1  
   return (UsbType_t)cdcGetType();
 #elif HW_USE_KBD == 1
   return USB_CON_KBD;
@@ -196,7 +229,7 @@ void cliCmd(cli_args_t *args)
 
     ret = true;
   }
-#if HW_USE_CDC == 1
+#if HW_USB_CDC == 1
   if (args->argc == 1 && args->isStr(0, "tx") == true)
   {
     uint32_t pre_time;
@@ -254,7 +287,7 @@ void cliCmd(cli_args_t *args)
   if (ret == false)
   {
     cliPrintf("usb info\n");
-    #if HW_USE_CDC == 1
+    #if HW_USB_CDC == 1
     cliPrintf("usb tx\n");
     cliPrintf("usb rx\n");
     #endif

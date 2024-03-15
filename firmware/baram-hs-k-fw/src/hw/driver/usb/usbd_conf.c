@@ -395,7 +395,8 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_HS,    512);
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 0, 128);
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 1, 128);
-  
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 2, 128);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 3, 128);  
   }
   return USBD_OK;
 }
@@ -657,8 +658,18 @@ USBD_StatusTypeDef USBD_LL_SetTestMode(USBD_HandleTypeDef *pdev, uint8_t testmod
 void *USBD_static_malloc(uint32_t size)
 {
   UNUSED(size);
-  static uint32_t mem[(sizeof(USBD_CDC_HandleTypeDef)/4)+1];/* On 32-bit boundary */
-  return mem;
+  static uint32_t len = 0;
+  static uint32_t mem[4096]; /* On 32-bit boundary */
+  uint32_t offset;
+
+  offset = len;
+  if (len > 4096)
+  {
+    return NULL;
+  }
+  len += (size/4 + 1);
+
+  return &mem[offset];
 }
 
 /**
