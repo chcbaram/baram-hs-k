@@ -50,8 +50,9 @@ static uint8_t * USBD_CMP_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t
 static uint8_t * USBD_CMP_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 static uint8_t * USBD_CMP_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 static uint8_t * USBD_CMP_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
-
-
+#if (USBD_CLASS_USER_STRING_DESC == 1)
+static uint8_t * USBD_CMD_GetUserStrDescriptor(USBD_SpeedTypeDef speed, uint8_t idx, uint16_t *length);
+#endif
 
 USBD_DescriptorsTypeDef CMP_Desc =
 {
@@ -61,7 +62,10 @@ USBD_DescriptorsTypeDef CMP_Desc =
   USBD_CMP_ProductStrDescriptor,
   USBD_CMP_SerialStrDescriptor,
   USBD_CMP_ConfigStrDescriptor,
-  USBD_CMP_InterfaceStrDescriptor
+  USBD_CMP_InterfaceStrDescriptor,
+  #if (USBD_CLASS_USER_STRING_DESC == 1)
+  USBD_CMD_GetUserStrDescriptor,
+  #endif
 };
 
 
@@ -234,6 +238,23 @@ uint8_t * USBD_CMP_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *len
   }
   return USBD_StrDesc;
 }
+
+#if (USBD_CLASS_USER_STRING_DESC == 1)
+uint8_t * USBD_CMD_GetUserStrDescriptor(USBD_SpeedTypeDef speed, uint8_t idx, uint16_t *length)
+{
+  logPrintf("USBD_CMD_GetUserStrDescriptor() %d \n", idx);
+
+  if(speed == 0)
+  {
+    USBD_GetString((uint8_t *)"test", USBD_StrDesc, length);
+  }
+  else
+  {
+    USBD_GetString((uint8_t *)"test", USBD_StrDesc, length);
+  }
+  return USBD_StrDesc;
+}
+#endif
 
 #if (USBD_LPM_ENABLED == 1)
 /**

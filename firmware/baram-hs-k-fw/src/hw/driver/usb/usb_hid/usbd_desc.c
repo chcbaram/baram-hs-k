@@ -43,7 +43,7 @@ static void IntToUnicode(uint32_t value, uint8_t * pbuf, uint8_t len);
 static uint8_t * USBD_HID_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 static uint8_t * USBD_HID_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 static uint8_t * USBD_HID_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
-static uint8_t * USBD_HID_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
+// static uint8_t * USBD_HID_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 static uint8_t * USBD_HID_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 static uint8_t * USBD_HID_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 static uint8_t * USBD_HID_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
@@ -58,7 +58,10 @@ USBD_DescriptorsTypeDef HID_Desc =
   USBD_HID_ProductStrDescriptor,
   USBD_HID_SerialStrDescriptor,
   USBD_HID_ConfigStrDescriptor,
-  USBD_HID_InterfaceStrDescriptor
+  USBD_HID_InterfaceStrDescriptor,
+  #if (USBD_CLASS_USER_STRING_DESC == 1)
+  NULL,
+  #endif
 };
 
 

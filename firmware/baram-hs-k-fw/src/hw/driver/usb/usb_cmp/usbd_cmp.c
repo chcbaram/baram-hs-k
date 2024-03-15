@@ -819,6 +819,22 @@ static void  USBD_CMPSIT_HIDKeyboardDesc(USBD_HandleTypeDef *pdev, uint32_t pCon
   static USBD_IfDescTypeDef *pIfDesc;
   static USBD_EpDescTypeDef *pEpDesc;
   static USBD_HIDDescTypeDef *pHidKeyboardDesc;
+#if USBD_COMPOSITE_USE_IAD == 1
+  static USBD_IadDescTypeDef              *pIadDesc;
+#endif /* USBD_COMPOSITE_USE_IAD == 1 */
+
+#if USBD_COMPOSITE_USE_IAD == 1
+  pIadDesc                          = ((USBD_IadDescTypeDef *)(pConf + *Sze));
+  pIadDesc->bLength                 = (uint8_t)sizeof(USBD_IadDescTypeDef);
+  pIadDesc->bDescriptorType         = USB_DESC_TYPE_IAD; /* IAD descriptor */
+  pIadDesc->bFirstInterface         = pdev->tclasslist[pdev->classId].Ifs[0];
+  pIadDesc->bInterfaceCount         = 1U;    /* 1 interfaces */
+  pIadDesc->bFunctionClass          = 0x03U;
+  pIadDesc->bFunctionSubClass       = 0x00U;
+  pIadDesc->bFunctionProtocol       = 0x00U;
+  pIadDesc->iFunction               = 1U; /* String Index */
+  *Sze                              += (uint32_t)sizeof(USBD_IadDescTypeDef);
+#endif /* USBD_COMPOSITE_USE_IAD == 1 */
 
   /* Append HID Interface descriptor to Configuration descriptor */
   __USBD_CMPSIT_SET_IF(pdev->tclasslist[pdev->classId].Ifs[0], 0U, \

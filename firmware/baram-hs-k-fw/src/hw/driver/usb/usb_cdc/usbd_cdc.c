@@ -57,6 +57,8 @@
 #ifdef USE_USBD_COMPOSITE
 #include "usbd_cmp.h"
 #endif
+#include "usbd_desc.h"
+
 
 static uint8_t USBD_CDC_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 static uint8_t USBD_CDC_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
@@ -70,6 +72,11 @@ static uint8_t *USBD_CDC_GetHSCfgDesc(uint16_t *length);
 static uint8_t *USBD_CDC_GetOtherSpeedCfgDesc(uint16_t *length);
 uint8_t *USBD_CDC_GetDeviceQualifierDescriptor(uint16_t *length);
 #endif /* USE_USBD_COMPOSITE  */
+
+#if (USBD_SUPPORT_USER_STRING_DESC == 1U)
+static uint8_t *USBD_CDC_GetUsrStrDescriptor(struct _USBD_HandleTypeDef *pdev, uint8_t index,  uint16_t *length);
+#endif 
+
 
 #ifndef USE_USBD_COMPOSITE
 /* USB Standard Device Descriptor */
@@ -121,6 +128,10 @@ USBD_ClassTypeDef  USBD_CDC =
   USBD_CDC_GetOtherSpeedCfgDesc,
   USBD_CDC_GetDeviceQualifierDescriptor,
 #endif /* USE_USBD_COMPOSITE  */
+
+#if (USBD_SUPPORT_USER_STRING_DESC == 1U)
+  USBD_CDC_GetUsrStrDescriptor,
+#endif 
 };
 
 #ifndef USE_USBD_COMPOSITE
@@ -579,6 +590,15 @@ static uint8_t USBD_CDC_EP0_RxReady(USBD_HandleTypeDef *pdev)
 
   return (uint8_t)USBD_OK;
 }
+
+#if (USBD_SUPPORT_USER_STRING_DESC == 1U)
+uint8_t *USBD_CDC_GetUsrStrDescriptor(struct _USBD_HandleTypeDef *pdev, uint8_t index,  uint16_t *length)
+{
+  logPrintf("USBD_CDC_GetUsrStrDescriptor() %d\n", index);
+  return USBD_CDC_ProductStrDescriptor(pdev->dev_speed, length);
+}
+#endif
+
 #ifndef USE_USBD_COMPOSITE
 /**
   * @brief  USBD_CDC_GetFSCfgDesc

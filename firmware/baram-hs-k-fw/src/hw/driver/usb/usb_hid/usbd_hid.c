@@ -41,6 +41,8 @@
 
 #include "usbd_hid.h"
 #include "usbd_ctlreq.h"
+#include "usbd_desc.h"
+
 #include "cli.h"
 #include "button.h"
 
@@ -65,6 +67,11 @@ static uint8_t *USBD_HID_GetHSCfgDesc(uint16_t *length);
 static uint8_t *USBD_HID_GetOtherSpeedCfgDesc(uint16_t *length);
 static uint8_t *USBD_HID_GetDeviceQualifierDesc(uint16_t *length);
 #endif /* USE_USBD_COMPOSITE  */
+
+#if (USBD_SUPPORT_USER_STRING_DESC == 1U)
+static uint8_t *USBD_HID_GetUsrStrDescriptor(struct _USBD_HandleTypeDef *pdev, uint8_t index,  uint16_t *length);
+#endif 
+
 
 static void cliCmd(cli_args_t *args);
 
@@ -96,6 +103,10 @@ USBD_ClassTypeDef USBD_HID =
   USBD_HID_GetOtherSpeedCfgDesc,
   USBD_HID_GetDeviceQualifierDesc,
 #endif /* USE_USBD_COMPOSITE  */
+
+#if (USBD_SUPPORT_USER_STRING_DESC == 1U)
+  USBD_HID_GetUsrStrDescriptor,
+#endif 
 };
 
 #ifndef USE_USBD_COMPOSITE
@@ -596,6 +607,14 @@ uint32_t USBD_HID_GetPollingInterval(USBD_HandleTypeDef *pdev)
 
   return ((uint32_t)(polling_interval));
 }
+
+#if (USBD_SUPPORT_USER_STRING_DESC == 1U)
+uint8_t *USBD_HID_GetUsrStrDescriptor(struct _USBD_HandleTypeDef *pdev, uint8_t index,  uint16_t *length)
+{
+  logPrintf("USBD_HID_GetUsrStrDescriptor() %d\n", index);
+  return USBD_HID_ProductStrDescriptor(pdev->dev_speed, length);
+}
+#endif
 
 #ifndef USE_USBD_COMPOSITE
 /**
