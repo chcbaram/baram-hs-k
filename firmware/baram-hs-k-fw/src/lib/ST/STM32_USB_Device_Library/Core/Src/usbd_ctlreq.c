@@ -429,6 +429,8 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
   uint8_t *pbuf = NULL;
   uint8_t err = 0U;
 
+  logPrintf("USBD_GetDescriptor : %d\n", req->wValue);
+
   switch (req->wValue >> 8)
   {
 #if ((USBD_LPM_ENABLED == 1U) || (USBD_CLASS_BOS_ENABLED == 1U))
