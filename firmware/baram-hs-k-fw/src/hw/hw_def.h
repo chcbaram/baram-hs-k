@@ -16,8 +16,10 @@
 #define      HW_LED_MAX_CH          3
 
 #define _USE_HW_UART
-#define      HW_UART_MAX_CH         1
+#define      HW_UART_MAX_CH         2
 #define      HW_UART_CH_SWD         _DEF_UART1
+#define      HW_UART_CH_USB         _DEF_UART2
+#define      HW_UART_CH_CLI         HW_UART_CH_SWD
 
 #define _USE_HW_BUTTON
 #define      HW_BUTTON_MAX_CH       1
@@ -33,16 +35,17 @@
 #define      HW_CLI_GUI_HEIGHT      24
 
 #define _USE_HW_LOG
-#define      HW_LOG_CH              _DEF_UART1
+#define      HW_LOG_CH              HW_UART_CH_SWD
 #define      HW_LOG_BOOT_BUF_MAX    2048
 #define      HW_LOG_LIST_BUF_MAX    4096
 
 #define _USE_HW_USB
+#define _USE_HW_CDC
 #define      HW_USB_LOG             1
-#define      HW_USE_CDC             0
-#define      HW_USE_MSC             0
-#define      HW_USE_HID             1
-
+#define      HW_USB_CMP             1
+#define      HW_USB_CDC             1
+#define      HW_USB_MSC             0
+#define      HW_USB_HID             1
 
 //-- CLI
 //

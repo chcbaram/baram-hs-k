@@ -21,7 +21,7 @@
 #include "usbd_ioreq.h"
 
 #ifdef USE_USBD_COMPOSITE
-#include "usbd_composite_builder.h"
+#include "usbd_cmp.h"
 #endif /* USE_USBD_COMPOSITE */
 
 /** @addtogroup STM32_USBD_STATE_DEVICE_LIBRARY
@@ -429,6 +429,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
   uint8_t *pbuf = NULL;
   uint8_t err = 0U;
 
+
   switch (req->wValue >> 8)
   {
 #if ((USBD_LPM_ENABLED == 1U) || (USBD_CLASS_BOS_ENABLED == 1U))
@@ -507,6 +508,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
           break;
 
         case USBD_IDX_PRODUCT_STR:
+
           if (pdev->pDesc->GetProductStrDescriptor != NULL)
           {
             pbuf = pdev->pDesc->GetProductStrDescriptor(pdev->dev_speed, &len);
@@ -519,6 +521,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
           break;
 
         case USBD_IDX_SERIAL_STR:
+
           if (pdev->pDesc->GetSerialStrDescriptor != NULL)
           {
             pbuf = pdev->pDesc->GetSerialStrDescriptor(pdev->dev_speed, &len);
@@ -531,6 +534,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
           break;
 
         case USBD_IDX_CONFIG_STR:
+
           if (pdev->pDesc->GetConfigurationStrDescriptor != NULL)
           {
             pbuf = pdev->pDesc->GetConfigurationStrDescriptor(pdev->dev_speed, &len);
@@ -543,6 +547,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
           break;
 
         case USBD_IDX_INTERFACE_STR:
+
           if (pdev->pDesc->GetInterfaceStrDescriptor != NULL)
           {
             pbuf = pdev->pDesc->GetInterfaceStrDescriptor(pdev->dev_speed, &len);

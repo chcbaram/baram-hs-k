@@ -41,12 +41,20 @@
 
 #include "usbd_hid.h"
 #include "usbd_ctlreq.h"
+#include "usbd_desc.h"
+
 #include "cli.h"
 #include "button.h"
+#include "log.h"
 
 
 #if HW_USB_LOG == 1
-#define logDebug(...) logPrintf(__VA_ARGS__)
+#define logDebug(...)                              \
+  {                                                \
+    if (HW_LOG_CH == HW_UART_CH_USB) logDisable(); \
+    logPrintf(__VA_ARGS__);                        \
+    if (HW_LOG_CH == HW_UART_CH_USB) logEnable();  \
+  }
 #else
 #define logDebug(...) 
 #endif
@@ -65,6 +73,11 @@ static uint8_t *USBD_HID_GetHSCfgDesc(uint16_t *length);
 static uint8_t *USBD_HID_GetOtherSpeedCfgDesc(uint16_t *length);
 static uint8_t *USBD_HID_GetDeviceQualifierDesc(uint16_t *length);
 #endif /* USE_USBD_COMPOSITE  */
+
+#if (USBD_SUPPORT_USER_STRING_DESC == 1U)
+static uint8_t *USBD_HID_GetUsrStrDescriptor(struct _USBD_HandleTypeDef *pdev, uint8_t index,  uint16_t *length);
+#endif 
+
 
 static void cliCmd(cli_args_t *args);
 
@@ -96,6 +109,10 @@ USBD_ClassTypeDef USBD_HID =
   USBD_HID_GetOtherSpeedCfgDesc,
   USBD_HID_GetDeviceQualifierDesc,
 #endif /* USE_USBD_COMPOSITE  */
+
+#if (USBD_SUPPORT_USER_STRING_DESC == 1U)
+  USBD_HID_GetUsrStrDescriptor,
+#endif 
 };
 
 #ifndef USE_USBD_COMPOSITE
@@ -376,7 +393,7 @@ static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *re
     return (uint8_t)USBD_FAIL;
   }
 
-  logDebug("HID_SETUP\n");
+  logDebug("HID_SETUP %d\n", pdev->classId);
   logDebug("  req->bmRequest : 0x%X\n", req->bmRequest);
   logDebug("  req->bRequest  : 0x%X\n", req->bRequest);
 
@@ -409,7 +426,11 @@ static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *re
           logDebug("  USBD_HID_REQ_SET_REPORT  : 0x%X, 0x%d\n", req->wValue, req->wLength);     
           {   
             const uint8_t hid_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+            #ifdef USE_USBD_COMPOSITE
+            USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8, pdev->classId);      
+            #else
             USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8);                
+            #endif
           }
           ep0_req = *req;
           USBD_CtlPrepareRx(pdev, ep0_req_buf, req->wLength);
@@ -513,13 +534,13 @@ static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *re
   */
 uint8_t USBD_HID_EP0_RxReady(USBD_HandleTypeDef *pdev)
 {
-  logPrintf("USBD_HID_EP0_RxReady()\n");
+  logDebug("USBD_HID_EP0_RxReady()\n");
   logDebug("  req->bmRequest : 0x%X\n", ep0_req.bmRequest);
   logDebug("  req->bRequest  : 0x%X\n", ep0_req.bRequest);
-  logPrintf("  %d \n", ep0_req.wLength);
+  logDebug("  %d \n", ep0_req.wLength);
   for (int i=0; i<ep0_req.wLength; i++)
   {
-    logPrintf("  %d : 0x%02X\n", i, ep0_req_buf[i]);
+    logDebug("  %d : 0x%02X\n", i, ep0_req_buf[i]);
   }
 
   return (uint8_t)USBD_OK;
@@ -592,6 +613,14 @@ uint32_t USBD_HID_GetPollingInterval(USBD_HandleTypeDef *pdev)
 
   return ((uint32_t)(polling_interval));
 }
+
+#if (USBD_SUPPORT_USER_STRING_DESC == 1U)
+uint8_t *USBD_HID_GetUsrStrDescriptor(struct _USBD_HandleTypeDef *pdev, uint8_t index,  uint16_t *length)
+{
+  logPrintf("USBD_HID_GetUsrStrDescriptor() %d\n", index);
+  return USBD_HID_ProductStrDescriptor(pdev->dev_speed, length);
+}
+#endif
 
 #ifndef USE_USBD_COMPOSITE
 /**
@@ -692,7 +721,11 @@ static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
     hid_buf[2] = 0x00;
   }
 
+  #ifdef USE_USBD_COMPOSITE
+  USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8, pdev->classId);  
+  #else
   USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8);  
+  #endif
   data_in_cnt++;
 
   uint32_t rate_time_cur;

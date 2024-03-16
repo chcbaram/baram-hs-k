@@ -35,8 +35,9 @@ bool hwInit(void)
   logPrintf("\n");
 
   buttonInit();
+  cdcInit();
   usbInit();
-  usbBegin(USB_HID_MODE);
-
+  usbBegin(USB_CMP_MODE);
+  
   return true;
 }

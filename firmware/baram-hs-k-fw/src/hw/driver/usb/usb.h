@@ -25,19 +25,20 @@ extern "C" {
 #include "usbd_core.h"
 #include "usbd_desc.h"
 
-#if HW_USE_CDC == 1
+#if HW_USB_CDC == 1
 #include "usbd_cdc.h"
 #include "usbd_cdc_if.h"
 #endif
 
-#if HW_USE_MSC == 1
+#if HW_USB_MSC == 1
 #include "usbd_msc.h"
 #endif
 
-#if HW_USE_HID == 1
+#if HW_USB_HID == 1
 #include "usbd_hid.h"
 // #include "usbd_hid_if.h"
 #endif
+
 
 typedef enum UsbMode
 {
@@ -45,6 +46,7 @@ typedef enum UsbMode
   USB_CDC_MODE,
   USB_MSC_MODE,
   USB_HID_MODE,
+  USB_CMP_MODE,
 } UsbMode_t;
 
 typedef enum UsbType

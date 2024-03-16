@@ -48,22 +48,27 @@
 #define __USBD_CONF_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "bsp.h"
+#include "hw_def.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* Exported types ------------------------------------------------------------*/
-/* Exported constants --------------------------------------------------------*/
+#if HW_USB_CMP == 1
+#define USE_USBD_COMPOSITE
+#define USBD_COMPOSITE_USE_IAD                1
+#endif
+#define USE_USB_HS
+
+
 /* Common Config */
-#define USBD_MAX_NUM_INTERFACES               1
+#define USBD_MAX_NUM_INTERFACES               15
 #define USBD_MAX_NUM_CONFIGURATION            1
-#define USBD_MAX_STR_DESC_SIZ                 0x100
-#define USBD_SUPPORT_USER_STRING              0 
+#define USBD_MAX_STR_DESC_SIZ                 512
 #define USBD_SELF_POWERED                     1
 #define USBD_LPM_ENABLED                      0
 #define USBD_DEBUG_LEVEL                      0
-
+#define USBD_SUPPORT_USER_STRING              0
+#define USBD_SUPPORT_USER_STRING_DESC         0
 
 #define DEVICE_FS 		0
 #define DEVICE_HS 		1

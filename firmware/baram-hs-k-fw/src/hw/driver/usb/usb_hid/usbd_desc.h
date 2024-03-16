@@ -43,6 +43,7 @@
 extern USBD_DescriptorsTypeDef     HID_Desc;
 
 
+
 #ifdef __cplusplus
 }
 #endif

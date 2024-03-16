@@ -76,6 +76,7 @@ target_include_directories(${EXECUTABLE} PRIVATE
   src/hw/driver/usb
   src/hw/driver/usb/usb_cdc
   src/hw/driver/usb/usb_hid
+  src/hw/driver/usb/usb_cmp
 
   src/lib/ST/CMSIS/Include
   src/lib/ST/CMSIS/Device/ST/STM32U5xx/Include
