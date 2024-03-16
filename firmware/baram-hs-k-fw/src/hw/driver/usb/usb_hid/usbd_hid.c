@@ -45,10 +45,16 @@
 
 #include "cli.h"
 #include "button.h"
+#include "log.h"
 
 
 #if HW_USB_LOG == 1
-#define logDebug(...) logPrintf(__VA_ARGS__)
+#define logDebug(...)                              \
+  {                                                \
+    if (HW_LOG_CH == HW_UART_CH_USB) logDisable(); \
+    logPrintf(__VA_ARGS__);                        \
+    if (HW_LOG_CH == HW_UART_CH_USB) logEnable();  \
+  }
 #else
 #define logDebug(...) 
 #endif
@@ -528,13 +534,13 @@ static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *re
   */
 uint8_t USBD_HID_EP0_RxReady(USBD_HandleTypeDef *pdev)
 {
-  logPrintf("USBD_HID_EP0_RxReady()\n");
+  logDebug("USBD_HID_EP0_RxReady()\n");
   logDebug("  req->bmRequest : 0x%X\n", ep0_req.bmRequest);
   logDebug("  req->bRequest  : 0x%X\n", ep0_req.bRequest);
-  logPrintf("  %d \n", ep0_req.wLength);
+  logDebug("  %d \n", ep0_req.wLength);
   for (int i=0; i<ep0_req.wLength; i++)
   {
-    logPrintf("  %d : 0x%02X\n", i, ep0_req_buf[i]);
+    logDebug("  %d : 0x%02X\n", i, ep0_req_buf[i]);
   }
 
   return (uint8_t)USBD_OK;
