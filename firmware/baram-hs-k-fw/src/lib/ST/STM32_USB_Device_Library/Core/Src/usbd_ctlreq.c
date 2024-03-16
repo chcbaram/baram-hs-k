@@ -429,7 +429,6 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
   uint8_t *pbuf = NULL;
   uint8_t err = 0U;
 
-  logPrintf("USBD_GetDescriptor : %d\n", req->wValue);
 
   switch (req->wValue >> 8)
   {
@@ -509,8 +508,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
           break;
 
         case USBD_IDX_PRODUCT_STR:
-          logPrintf("USBD_IDX_PRODUCT_STR : %d\n", pdev->classId);
-          logPrintf("   : %d\n", pdev->dev_address);
+
           if (pdev->pDesc->GetProductStrDescriptor != NULL)
           {
             pbuf = pdev->pDesc->GetProductStrDescriptor(pdev->dev_speed, &len);
@@ -523,7 +521,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
           break;
 
         case USBD_IDX_SERIAL_STR:
-          logPrintf("USBD_IDX_SERIAL_STR : %d\n", pdev->classId);
+
           if (pdev->pDesc->GetSerialStrDescriptor != NULL)
           {
             pbuf = pdev->pDesc->GetSerialStrDescriptor(pdev->dev_speed, &len);
@@ -536,7 +534,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
           break;
 
         case USBD_IDX_CONFIG_STR:
-          logPrintf("USBD_IDX_CONFIG_STR : %d\n", pdev->classId);
+
           if (pdev->pDesc->GetConfigurationStrDescriptor != NULL)
           {
             pbuf = pdev->pDesc->GetConfigurationStrDescriptor(pdev->dev_speed, &len);
@@ -549,7 +547,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
           break;
 
         case USBD_IDX_INTERFACE_STR:
-          logPrintf("USBD_IDX_INTERFACE_STR : %d\n", pdev->classId);
+
           if (pdev->pDesc->GetInterfaceStrDescriptor != NULL)
           {
             pbuf = pdev->pDesc->GetInterfaceStrDescriptor(pdev->dev_speed, &len);

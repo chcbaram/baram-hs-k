@@ -27,7 +27,7 @@ extern USBD_DescriptorsTypeDef MSC_Desc;
 extern USBD_DescriptorsTypeDef HID_Desc;
 extern USBD_DescriptorsTypeDef CMP_Desc;
 
-
+static USBD_DescriptorsTypeDef *p_desc = NULL;
 
 static uint8_t hid_ep_tbl[] = {HID_EPIN_ADDR};
 static uint8_t cdc_ep_tbl[] = {CDC_IN_EP, CDC_OUT_EP, CDC_CMD_EP};
@@ -72,6 +72,7 @@ bool usbBegin(UsbMode_t usb_mode)
 
     is_usb_mode = USB_CDC_MODE;
     
+    p_desc = &VCP_Desc;
     logPrintf("[OK] usbBegin()\n");
     logPrintf("     USB_CDC\r\n");
     #endif
@@ -95,6 +96,7 @@ bool usbBegin(UsbMode_t usb_mode)
 
     is_usb_mode = USB_MSC_MODE;
 
+    p_desc = &MSC_Desc;
     logPrintf("[OK] usbBegin()\n");
     logPrintf("     USB_MSC\r\n");
     #endif
@@ -113,6 +115,7 @@ bool usbBegin(UsbMode_t usb_mode)
 
     is_usb_mode = USB_HID_MODE;
     
+    p_desc = &HID_Desc;
     logPrintf("[OK] usbBegin()\n");
     logPrintf("     USB_HID\r\n");
     #endif
@@ -134,6 +137,7 @@ bool usbBegin(UsbMode_t usb_mode)
 
     is_usb_mode = USB_CDC_MODE;
     
+    p_desc = &CMP_Desc;
     logPrintf("[OK] usbBegin()\n");
     logPrintf("     USB_CMP\r\n");
     #endif
@@ -216,6 +220,22 @@ void cliCmd(cli_args_t *args)
 
   if (args->argc == 1 && args->isStr(0, "info") == true)
   {
+    uint16_t vid = 0;
+    uint16_t pid = 0;
+    uint8_t *p_data;
+    uint16_t len = 0;
+
+
+    if (p_desc != NULL)
+    {
+      p_data = p_desc->GetDeviceDescriptor(USBD_SPEED_HIGH, &len);
+      vid = (p_data[ 9]<<8)|(p_data[ 8]<<0);
+      pid = (p_data[11]<<8)|(p_data[10]<<0);
+    }
+
+    cliPrintf("USB PID     : 0x%04X\n", vid);
+    cliPrintf("USB VID     : 0x%04X\n", pid);
+
     while(cliKeepLoop())
     {
       cliPrintf("USB Mode    : %d\n", usbGetMode());

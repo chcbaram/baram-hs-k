@@ -40,9 +40,6 @@
 /** Descriptor for the Usb device. */
 extern USBD_DescriptorsTypeDef VCP_Desc;
 
-uint8_t * USBD_CDC_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
-
-
 
 #ifdef __cplusplus
 }

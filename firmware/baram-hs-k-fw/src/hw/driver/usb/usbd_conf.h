@@ -56,7 +56,6 @@
 #if HW_USB_CMP == 1
 #define USE_USBD_COMPOSITE
 #define USBD_COMPOSITE_USE_IAD                1
-#define USBD_CLASS_USER_STRING_DESC           1
 #endif
 #define USE_USB_HS
 
@@ -68,8 +67,8 @@
 #define USBD_SELF_POWERED                     1
 #define USBD_LPM_ENABLED                      0
 #define USBD_DEBUG_LEVEL                      0
-#define USBD_SUPPORT_USER_STRING              1
-#define USBD_SUPPORT_USER_STRING_DESC         1
+#define USBD_SUPPORT_USER_STRING              0
+#define USBD_SUPPORT_USER_STRING_DESC         0
 
 #define DEVICE_FS 		0
 #define DEVICE_HS 		1

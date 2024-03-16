@@ -24,18 +24,16 @@
 
 
 
-
-
 #define USBD_VID                      0x0483
-#define USBD_PID_HS                   0x52A4
-// #define USBD_PID_HS                   57105 // for DFU PID must be 57105, ST proprietary modification
+#define USBD_PID_HS                   (0x5200|(HW_USB_CDC<<2)|(HW_USB_MSC<<1)|(HW_USB_HID<<0))
+
 
 #define USBD_LANGID_STRING            1033
 #define USBD_MANUFACTURER_STRING      "BARAM"
-#define USBD_PRODUCT_STRING_HS        "BARAM-HS-K Composit"
-#define USBD_PRODUCT_STRING_FS        "BARAM-FS-K Composit"
-#define USBD_CONFIGURATION_STRING_HS  "CMP-K Config"
-#define USBD_INTERFACE_STRING_HS      "CMP-K Interface"
+#define USBD_PRODUCT_STRING_HS        "BARAM-HS-K CMPSIT"
+#define USBD_PRODUCT_STRING_FS        "BARAM-FS-K CMPSIT"
+#define USBD_CONFIGURATION_STRING_HS  "HID-K Config"
+#define USBD_INTERFACE_STRING_HS      "HID-K Interface"
 
 
 
@@ -50,9 +48,7 @@ static uint8_t * USBD_CMP_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t
 static uint8_t * USBD_CMP_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 static uint8_t * USBD_CMP_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
 static uint8_t * USBD_CMP_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length);
-#if (USBD_CLASS_USER_STRING_DESC == 1)
-static uint8_t * USBD_CMD_GetUserStrDescriptor(USBD_SpeedTypeDef speed, uint8_t idx, uint16_t *length);
-#endif
+
 
 USBD_DescriptorsTypeDef CMP_Desc =
 {
@@ -64,7 +60,7 @@ USBD_DescriptorsTypeDef CMP_Desc =
   USBD_CMP_ConfigStrDescriptor,
   USBD_CMP_InterfaceStrDescriptor,
   #if (USBD_CLASS_USER_STRING_DESC == 1)
-  USBD_CMD_GetUserStrDescriptor,
+  NULL,
   #endif
 };
 
