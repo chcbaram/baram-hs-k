@@ -689,8 +689,10 @@ static uint32_t data_in_rate = 0;
 
 static uint32_t rate_time_pre = 0;
 static uint32_t rate_time_us  = 0;
-static uint32_t rate_time_min = 0xFFFF; 
+static uint32_t rate_time_min = 0; 
 static uint32_t rate_time_max = 0; 
+static uint32_t rate_time_min_check = 0xFFFF; 
+static uint32_t rate_time_max_check = 0; 
 
 static uint16_t rate_his_buf[100];
 
@@ -732,13 +734,13 @@ static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
   
   rate_time_cur = micros();
   rate_time_us  = rate_time_cur - rate_time_pre;
-  if (rate_time_min > rate_time_us)
+  if (rate_time_min_check > rate_time_us)
   {
-    rate_time_min = rate_time_us;
+    rate_time_min_check = rate_time_us;
   }
-  if (rate_time_max < rate_time_us)
+  if (rate_time_max_check < rate_time_us)
   {
-    rate_time_max = rate_time_us;
+    rate_time_max_check = rate_time_us;
   }
   rate_time_pre = rate_time_cur;
 
@@ -761,7 +763,12 @@ uint8_t USBD_HID_SOF(USBD_HandleTypeDef *pdev)
   {
     cnt = 0;
     data_in_rate = data_in_cnt;
+    rate_time_min = rate_time_min_check; 
+    rate_time_max = rate_time_max_check;     
     data_in_cnt = 0;
+
+    rate_time_min_check = 0xFFFF; 
+    rate_time_max_check = 0;     
   }  
   cnt++;
 
@@ -800,8 +807,6 @@ void cliCmd(cli_args_t *args)
   {
     uint32_t pre_time;
 
-    rate_time_max = 0;
-    rate_time_min = 0xFFFF;
     memset(rate_his_buf, 0, sizeof(rate_his_buf));
 
     pre_time = millis();
@@ -810,7 +815,7 @@ void cliCmd(cli_args_t *args)
       if (millis()-pre_time >= 1000)
       {
         pre_time = millis();
-        cliPrintf("hid rate %d, max %d us, min %d us\n", 
+        cliPrintf("hid rate %d Hz, max %4d us, min %d us\n", 
           data_in_rate,
           rate_time_max,
           rate_time_min); 
