@@ -7,6 +7,14 @@
 #include "cli.h"
 
 
+typedef enum
+{
+  KEYSCAN_NODE_IDLE,
+  KEYSCAN_NODE_PRESSED_CHECK,
+  KEYSCAN_NODE_RELEASED_CHECK,
+  KEYSCAN_NODE_PRESSED,
+  KEYSCAN_NODE_RELEASED,
+} KeyscanNodeState_t;
 
 
 typedef struct
@@ -14,21 +22,22 @@ typedef struct
   uint8_t  index;
   uint8_t  state;
   uint32_t time_exe; 
-  bool     pin_cur_state;
-  bool     pin_pre_state;
+  bool     pin_cur;
+  bool     pin_pre;
   uint8_t  pressed; 
 } keyscan_event_q_t;
 
 
 typedef struct
 {
-  uint8_t  state;
+  KeyscanNodeState_t state_cur;
+  KeyscanNodeState_t state_pre;
 
   uint32_t time_cur;
   uint32_t time_pre;  
   uint32_t time_exe; 
-  bool     pin_cur_state;
-  bool     pin_pre_state;
+  bool     pin_cur;
+  bool     pin_pre;
   uint8_t  pressed; 
 } keyscan_node_t;
 
@@ -61,7 +70,8 @@ bool keyscanInit(void)
 
   for (int i=0; i<info.key_cnt; i++)
   {
-    info.node[i].state = 0;
+    info.node[i].state_cur = KEYSCAN_NODE_IDLE;
+    info.node[i].state_pre = KEYSCAN_NODE_IDLE;
     info.node[i].pressed = false;
   }
 #if CLI_USE(HW_KEYSCAN)
@@ -89,23 +99,36 @@ void keyscanUpdate(void)
   {
     bool is_changed = false;
     info.node[i].time_cur = time_cur;
-    info.node[i].pin_pre_state = info.node[i].pin_cur_state;
-    info.node[i].pin_cur_state = buttonGetPressed(i);
+    info.node[i].pin_pre = info.node[i].pin_cur;
+    info.node[i].pin_cur = buttonGetPressed(i);
 
-    switch(info.node[i].state)
+    switch(info.node[i].state_cur)
     {
-      case 0:
-        info.node[i].pin_pre_state = info.node[i].pin_cur_state;
+      case KEYSCAN_NODE_IDLE:
+        info.node[i].pin_pre = info.node[i].pin_cur;
         info.node[i].time_pre = time_cur;
-        info.node[i].state = 1;
+        if (info.node[i].pin_cur == true)
+          info.node[i].state_cur = KEYSCAN_NODE_PRESSED_CHECK;
+        else
+          info.node[i].state_cur = KEYSCAN_NODE_RELEASED_CHECK;
         break;
 
-      case 1:        
+      case KEYSCAN_NODE_PRESSED_CHECK:
+        break;
+
+      case KEYSCAN_NODE_RELEASED_CHECK:
+        break;
+
+      case KEYSCAN_NODE_PRESSED:
+        break;
+
+      case KEYSCAN_NODE_RELEASED:
         break;
     }
+    info.node[i].state_pre = info.node[i].state_cur;
     info.node[i].time_exe = time_cur - info.node[i].time_pre;
 
-    if (info.node[i].pin_pre_state != info.node[i].pin_cur_state)
+    if (info.node[i].pin_pre != info.node[i].pin_cur)
     {
       is_changed = true;
       info.node[i].time_pre = time_cur;
@@ -116,8 +139,8 @@ void keyscanUpdate(void)
       keyscan_event_q_t event_q;
 
       event_q.index = i;
-      event_q.pin_cur_state = info.node[i].pin_cur_state;
-      event_q.pin_pre_state = info.node[i].pin_pre_state;
+      event_q.pin_cur = info.node[i].pin_cur;
+      event_q.pin_pre = info.node[i].pin_pre;
       event_q.time_exe = info.node[i].time_exe;
 
       qbufferWrite(&keyscan_event_q, (uint8_t *)&event_q, 1);
@@ -159,7 +182,7 @@ void cliCmd(cli_args_t *args)
 
       cliPrintf("%d \n", i);
       cliPrintf("  index : %d \n", event_q.index);
-      cliPrintf("  pin   : %d -> %d\n", event_q.pin_pre_state, event_q.pin_cur_state);
+      cliPrintf("  pin   : %d -> %d\n", event_q.pin_pre, event_q.pin_cur);
       cliPrintf("  time  : %d us, %d ms\n", event_q.time_exe, event_q.time_exe/1000);
     }
 
