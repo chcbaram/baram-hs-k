@@ -38,6 +38,8 @@ bool hwInit(void)
   cdcInit();
   usbInit();
   usbBegin(USB_CMP_MODE);
-  
+  keyscanInit();
+
+
   return true;
 }

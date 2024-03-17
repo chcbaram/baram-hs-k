@@ -55,6 +55,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern DMA_HandleTypeDef handle_GPDMA1_Channel13;
 extern DMA_NodeTypeDef Node_GPDMA1_Channel0;
 extern DMA_QListTypeDef List_GPDMA1_Channel0;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel0;
@@ -202,6 +203,20 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles EXTI Line13 interrupt.
+  */
+void EXTI13_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI13_IRQn 0 */
+
+  /* USER CODE END EXTI13_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
+  /* USER CODE BEGIN EXTI13_IRQn 1 */
+
+  /* USER CODE END EXTI13_IRQn 1 */
+}
+
+/**
   * @brief This function handles GPDMA1 Channel 0 global interrupt.
   */
 void GPDMA1_Channel0_IRQHandler(void)
@@ -227,6 +242,20 @@ void OTG_HS_IRQHandler(void)
   /* USER CODE BEGIN OTG_HS_IRQn 1 */
 
   /* USER CODE END OTG_HS_IRQn 1 */
+}
+
+/**
+  * @brief This function handles GPDMA1 Channel 13 global interrupt.
+  */
+void GPDMA1_Channel13_IRQHandler(void)
+{
+  /* USER CODE BEGIN GPDMA1_Channel13_IRQn 0 */
+
+  /* USER CODE END GPDMA1_Channel13_IRQn 0 */
+  HAL_DMA_IRQHandler(&handle_GPDMA1_Channel13);
+  /* USER CODE BEGIN GPDMA1_Channel13_IRQn 1 */
+
+  /* USER CODE END GPDMA1_Channel13_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

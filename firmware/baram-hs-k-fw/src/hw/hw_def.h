@@ -47,9 +47,14 @@
 #define      HW_USB_MSC             0
 #define      HW_USB_HID             1
 
+#define _USE_HW_KEYSCAN
+#define      HW_KEYSCAN_MAX_CH      120
+
+
+
 //-- CLI
 //
 #define _USE_CLI_HW_BUTTON          1
-
+#define _USE_CLI_HW_KEYSCAN         1
 
 #endif
