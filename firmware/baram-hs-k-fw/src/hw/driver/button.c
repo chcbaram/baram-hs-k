@@ -20,7 +20,9 @@ typedef struct
 {
   GPIO_TypeDef *port;
   uint32_t      pin;
+  uint32_t      pull;
   GPIO_PinState on_state;
+  IRQn_Type     irq_type;
 } button_pin_t;
 
 
@@ -32,15 +34,12 @@ static bool buttonGetPin(uint8_t ch);
 
 static const button_pin_t button_pin[BUTTON_MAX_CH] =
     {
-      {GPIOC, GPIO_PIN_13, GPIO_PIN_SET},  // 0. B1
+      {GPIOC, GPIO_PIN_13, GPIO_PULLDOWN, GPIO_PIN_SET, EXTI13_IRQn},  // 0. B1
     };
 
-static const char *button_name[BUTTON_MAX_CH] = 
-{
-  "_BTN_B1",   
-};
 
 static button_t button_tbl[BUTTON_MAX_CH];
+
 
 
 
@@ -54,15 +53,6 @@ bool buttonInit(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
 
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-
-  for (int i=0; i<BUTTON_MAX_CH; i++)
-  {
-    GPIO_InitStruct.Pin = button_pin[i].pin;
-    HAL_GPIO_Init(button_pin[i].port, &GPIO_InitStruct);
-  }
-
   for (int i=0; i<BUTTON_MAX_CH; i++)
   {
     button_tbl[i].state          = 0;
@@ -70,11 +60,29 @@ bool buttonInit(void)
     button_tbl[i].pressed        = false;
   }
 
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;  
+  for (int i=0; i<BUTTON_MAX_CH; i++)
+  {
+    GPIO_InitStruct.Pin = button_pin[i].pin;
+    GPIO_InitStruct.Pull = button_pin[i].pull;
+    HAL_GPIO_Init(button_pin[i].port, &GPIO_InitStruct);
+
+
+    HAL_NVIC_SetPriority(button_pin[i].irq_type, 5, 0);
+    HAL_NVIC_EnableIRQ(button_pin[i].irq_type);    
+  }
+
+
 #if CLI_USE(HW_BUTTON)
   cliAdd("button", cliButton);
 #endif
 
   return ret;
+}
+
+void buttonSetEventISR(void (*func)(void))
+{
+
 }
 
 bool buttonGetPin(uint8_t ch)
@@ -118,13 +126,6 @@ uint32_t buttonGetData(void)
   return ret;
 }
 
-const char *buttonGetName(uint8_t ch)
-{
-  ch = constrain(ch, 0, BUTTON_MAX_CH);
-
-  return button_name[ch];
-}
-
 uint8_t  buttonGetPressedCount(void)
 {
   uint32_t i;
@@ -141,6 +142,31 @@ uint8_t  buttonGetPressedCount(void)
   return ret;
 }
 
+__weak void buttonUpdateEvent(void)
+{
+
+}
+
+void EXTI0_IRQHandler(void)   {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);    buttonUpdateEvent(); }
+void EXTI1_IRQHandler(void)   {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);    buttonUpdateEvent(); }
+void EXTI2_IRQHandler(void)   {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);    buttonUpdateEvent(); }
+void EXTI3_IRQHandler(void)   {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);    buttonUpdateEvent(); }
+void EXTI4_IRQHandler(void)   {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);    buttonUpdateEvent(); }
+void EXTI5_IRQHandler(void)   {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5);    buttonUpdateEvent(); }
+void EXTI6_IRQHandler(void)   {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_6);    buttonUpdateEvent(); }
+void EXTI7_IRQHandler(void)   {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);    buttonUpdateEvent(); }
+void EXTI8_IRQHandler(void)   {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);    buttonUpdateEvent(); }
+void EXTI9_IRQHandler(void)   {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);    buttonUpdateEvent(); }
+void EXTI10_IRQHandler(void)  {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_10);   buttonUpdateEvent(); }
+void EXTI11_IRQHandler(void)  {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);   buttonUpdateEvent(); }
+void EXTI12_IRQHandler(void)  {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_12);   buttonUpdateEvent(); }
+void EXTI13_IRQHandler(void)  {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);   buttonUpdateEvent(); }
+void EXTI14_IRQHandler(void)  {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_14);   buttonUpdateEvent(); }
+void EXTI15_IRQHandler(void)  {  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_15);   buttonUpdateEvent(); }
+
+
+
+
 #if CLI_USE(HW_BUTTON)
 void cliButton(cli_args_t *args)
 {
@@ -149,10 +175,6 @@ void cliButton(cli_args_t *args)
 
   if (args->argc == 1 && args->isStr(0, "info"))
   {
-    for (int i=0; i<BUTTON_MAX_CH; i++)
-    {
-      cliPrintf("%-12s pin %d : %d\n", buttonGetName(i), button_pin[i].pin, buttonGetPressed(i));
-    }
     ret = true;
   }
 

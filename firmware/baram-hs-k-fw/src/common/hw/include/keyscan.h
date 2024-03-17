@@ -10,7 +10,7 @@ extern "C" {
 
 
 bool keyscanInit(void);
-
+void keyscanUpdate(void);
 
 #ifdef __cplusplus
 }

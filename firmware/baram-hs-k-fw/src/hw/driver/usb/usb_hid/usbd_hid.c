@@ -46,7 +46,7 @@
 #include "cli.h"
 #include "button.h"
 #include "log.h"
-
+#include "keyscan.h"
 
 #if HW_USB_LOG == 1
 #define logDebug(...)                              \
@@ -710,9 +710,10 @@ static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
   be caused by  a new transfer before the end of the previous transfer */
   ((USBD_HID_HandleTypeDef *)pdev->pClassDataCmsit[pdev->classId])->state = USBD_HID_IDLE;
 
-
   static uint8_t hid_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
+
+  keyscanUpdate();
 
   if (buttonGetPressed(_DEF_BUTTON1))
   {
@@ -771,6 +772,8 @@ uint8_t USBD_HID_SOF(USBD_HandleTypeDef *pdev)
     rate_time_max_check = 0;     
   }  
   cnt++;
+
+  keyscanUpdate();
 
   return (uint8_t)USBD_OK;
 }

@@ -48,7 +48,7 @@
 #define      HW_USB_HID             1
 
 #define _USE_HW_KEYSCAN
-#define      HW_KEYSCAN_MAX_CH      120
+#define      HW_KEYSCAN_MAX_CH      HW_BUTTON_MAX_CH
 
 
 
