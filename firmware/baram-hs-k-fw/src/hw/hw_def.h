@@ -49,7 +49,7 @@
 
 #define _USE_HW_KEYSCAN
 #define      HW_KEYSCAN_MAX_CH      HW_BUTTON_MAX_CH
-
+#define      HW_KEYSCAN_PRESS_MAX   6
 
 
 //-- CLI

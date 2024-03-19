@@ -47,6 +47,8 @@
 #include "button.h"
 #include "log.h"
 #include "keyscan.h"
+#include "keyboard/keycode.h"
+
 
 #if HW_USB_LOG == 1
 #define logDebug(...)                              \
@@ -58,6 +60,10 @@
 #else
 #define logDebug(...) 
 #endif
+
+
+#define HID_KEYBOARD_REPORT_SIZE   (HW_KEYSCAN_PRESS_MAX + 2U)
+
 
 
 static uint8_t USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
@@ -271,7 +277,7 @@ __ALIGN_BEGIN static uint8_t HID_KEYBOARD_ReportDesc[HID_KEYBOARD_REPORT_DESC_SI
     0x95, 0x01,                    //   REPORT_COUNT (1)
     0x75, 0x03,                    //   REPORT_SIZE (3)
     0x91, 0x03,                    //   OUTPUT (Cnst,Var,Abs)
-    0x95, 0x06,                    //   REPORT_COUNT (6)
+    0x95, HW_KEYSCAN_PRESS_MAX,    //   REPORT_COUNT (6)
     0x75, 0x08,                    //   REPORT_SIZE (8)
     0x15, 0x00,                    //   LOGICAL_MINIMUM (0)
     0x25, 0x65,                    //   LOGICAL_MAXIMUM (101)
@@ -425,11 +431,11 @@ static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *re
         case USBD_HID_REQ_SET_REPORT:  
           logDebug("  USBD_HID_REQ_SET_REPORT  : 0x%X, 0x%d\n", req->wValue, req->wLength);     
           {   
-            const uint8_t hid_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+            const uint8_t hid_buf[HID_KEYBOARD_REPORT_SIZE] = {0, 0, 0, 0, 0, 0, 0, 0};
             #ifdef USE_USBD_COMPOSITE
-            USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8, pdev->classId);      
+            USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, HID_KEYBOARD_REPORT_SIZE, pdev->classId);      
             #else
-            USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8);                
+            USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, HID_KEYBOARD_REPORT_SIZE);                
             #endif
           }
           ep0_req = *req;
@@ -713,24 +719,27 @@ static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
   be caused by  a new transfer before the end of the previous transfer */
   ((USBD_HID_HandleTypeDef *)pdev->pClassDataCmsit[pdev->classId])->state = USBD_HID_IDLE;
 
-  static uint8_t hid_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  static uint8_t hid_buf[HID_KEYBOARD_REPORT_SIZE] = {0,};
 
 
   keyscanUpdate();
 
   if (buttonGetPressed(_DEF_BUTTON1))
   {
-    hid_buf[2] = 0x04; // a
+    for (int i=0; i<HW_KEYSCAN_PRESS_MAX; i++)
+    {
+      hid_buf[2 + i] = KC_A + i;
+    }     
   }
   else
   {
-    hid_buf[2] = 0x00;
+    memset(hid_buf, 0, sizeof(hid_buf));
   }
 
   #ifdef USE_USBD_COMPOSITE
-  USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8, pdev->classId);  
+  USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, HID_KEYBOARD_REPORT_SIZE, pdev->classId);  
   #else
-  USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8);  
+  USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, HID_KEYBOARD_REPORT_SIZE);  
   #endif
   data_in_cnt++;
 

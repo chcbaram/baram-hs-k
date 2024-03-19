@@ -148,6 +148,13 @@ void keyscanUpdate(void)
   }
 }
 
+bool keyscanGetKeyCode(keyscan_keycode_t *p_keycode)
+{
+  p_keycode->reserved = 0;
+  p_keycode->modifier = 0;
+
+  return true;
+}
 
 #if CLI_USE(HW_KEYSCAN)
 void cliCmd(cli_args_t *args)
