@@ -35,6 +35,7 @@ static bool buttonGetPin(uint8_t ch);
 static const button_pin_t button_pin[BUTTON_MAX_CH] =
     {
       {GPIOC, GPIO_PIN_13, GPIO_PULLDOWN, GPIO_PIN_SET, EXTI13_IRQn},  // 0. B1
+      {GPIOF, GPIO_PIN_5 , GPIO_PULLDOWN, GPIO_PIN_SET, EXTI5_IRQn },  // 1. B2
     };
 
 
@@ -51,6 +52,7 @@ bool buttonInit(void)
 
 
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
 
 
   for (int i=0; i<BUTTON_MAX_CH; i++)

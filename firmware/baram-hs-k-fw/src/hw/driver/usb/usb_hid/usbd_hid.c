@@ -724,16 +724,19 @@ static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 
   keyscanUpdate();
 
+  memset(hid_buf, 0, sizeof(hid_buf));
+
   if (buttonGetPressed(_DEF_BUTTON1))
   {
-    for (int i=0; i<HW_KEYSCAN_PRESS_MAX; i++)
-    {
-      hid_buf[2 + i] = KC_A + i;
-    }     
+    // for (int i=0; i<HW_KEYSCAN_PRESS_MAX; i++)
+    // {
+    //   hid_buf[2 + i] = KC_A + i;
+    // }     
+    hid_buf[2] = KC_A;
   }
-  else
+  if (buttonGetPressed(_DEF_BUTTON2))
   {
-    memset(hid_buf, 0, sizeof(hid_buf));
+    hid_buf[3] = KC_B;
   }
 
   #ifdef USE_USBD_COMPOSITE

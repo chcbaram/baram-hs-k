@@ -22,7 +22,7 @@
 #define      HW_UART_CH_CLI         HW_UART_CH_SWD
 
 #define _USE_HW_BUTTON
-#define      HW_BUTTON_MAX_CH       1
+#define      HW_BUTTON_MAX_CH       2
 
 #define _USE_HW_CLI
 #define      HW_CLI_CMD_LIST_MAX    32
