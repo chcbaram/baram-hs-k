@@ -38,14 +38,21 @@ typedef struct
   uint32_t time_exe; 
   bool     pin_cur;
   bool     pin_pre;
-  uint8_t  pressed; 
+  uint8_t  pressed;
+  bool     changed; 
 } keyscan_node_t;
 
 typedef struct
 {
-  uint32_t key_cnt;
-  uint32_t key_update_cnt;
+  uint32_t       key_cnt_max;
+  uint32_t       key_update_cnt;
   keyscan_node_t node[HW_KEYSCAN_MAX_CH];
+
+  uint32_t key_cnt_pressed;
+  uint16_t node_pressed[HW_KEYSCAN_MAX_CH];
+
+  uint32_t key_cnt_changed;
+  uint16_t node_changed[HW_KEYSCAN_MAX_CH];
 } keyscan_info_t;
 
 
@@ -65,14 +72,17 @@ bool keyscanInit(void)
 {
   qbufferCreateBySize(&keyscan_event_q, (uint8_t *)keyscan_event_buf, sizeof(keyscan_event_q_t), 100);
 
-  info.key_cnt = HW_KEYSCAN_MAX_CH;
-  info.key_update_cnt = 0;
+  info.key_cnt_max     = HW_KEYSCAN_MAX_CH;
+  info.key_update_cnt  = 0;
+  info.key_cnt_changed = 0;
+  info.key_cnt_pressed = 0;
 
-  for (int i=0; i<info.key_cnt; i++)
+  for (int i=0; i<info.key_cnt_max; i++)
   {
     info.node[i].state_cur = KEYSCAN_NODE_IDLE;
     info.node[i].state_pre = KEYSCAN_NODE_IDLE;
     info.node[i].pressed = false;
+    info.node[i].changed = false;
   }
 #if CLI_USE(HW_KEYSCAN)
   cliAdd("keyscan", cliCmd);
@@ -92,12 +102,17 @@ void keyscanUpdate(void)
 {
   uint32_t time_cur;
 
+
   info.key_update_cnt++;
   time_cur = micros();
 
-  for (int i=0; i<info.key_cnt; i++)
+  info.key_cnt_pressed = 0;
+  info.key_cnt_changed = 0;
+  for (int i=0; i<info.key_cnt_max; i++)
   {
     bool is_changed = false;
+    bool is_pressed = false;
+
     info.node[i].time_cur = time_cur;
     info.node[i].pin_pre = info.node[i].pin_cur;
     info.node[i].pin_cur = buttonGetPressed(i);
@@ -128,10 +143,17 @@ void keyscanUpdate(void)
     info.node[i].state_pre = info.node[i].state_cur;
     info.node[i].time_exe = time_cur - info.node[i].time_pre;
 
+    if (info.node[i].pin_cur == true)
+    {
+      is_pressed = true;
+    }
+
     if (info.node[i].pin_pre != info.node[i].pin_cur)
     {
       is_changed = true;
+      info.node[i].changed  = true;
       info.node[i].time_pre = time_cur;
+      
     }
 
     if (is_changed)
@@ -144,6 +166,15 @@ void keyscanUpdate(void)
       event_q.time_exe = info.node[i].time_exe;
 
       qbufferWrite(&keyscan_event_q, (uint8_t *)&event_q, 1);
+
+      info.node_changed[info.key_cnt_changed] = i;
+      info.key_cnt_changed++;
+    }
+
+    if (is_pressed)
+    {
+      info.node_pressed[info.key_cnt_pressed] = i;
+      info.key_cnt_pressed++;      
     }
   }
 }

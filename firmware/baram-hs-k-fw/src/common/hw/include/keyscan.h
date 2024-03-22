@@ -8,6 +8,7 @@ extern "C" {
 #include "hw_def.h"
 
 
+
 typedef struct
 {
   uint8_t modifier;
@@ -19,6 +20,9 @@ typedef struct
 bool keyscanInit(void);
 void keyscanUpdate(void);
 bool keyscanGetKeyCode(keyscan_keycode_t *p_keycode);
+
+bool keyscanGetChangedCode(keyscan_keycode_t *p_keycode);
+bool keyscanGetPressedCode(keyscan_keycode_t *p_keycode);
 
 #ifdef __cplusplus
 }
