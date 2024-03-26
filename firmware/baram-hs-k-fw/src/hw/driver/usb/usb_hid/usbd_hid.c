@@ -262,38 +262,61 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE] __
 
 __ALIGN_BEGIN static uint8_t HID_KEYBOARD_ReportDesc[HID_KEYBOARD_REPORT_DESC_SIZE] __ALIGN_END =
 {
-    0x05, 0x01,                    // USAGE_PAGE (Generic Desktop)
-    0x09, 0x06,                    // USAGE (Keyboard)
-    0xa1, 0x01,                    // COLLECTION (Application)
-    0x05, 0x07,                    //   USAGE_PAGE (Keyboard)
-    0x19, 0xe0,                    //   USAGE_MINIMUM (Keyboard LeftControl)
-    0x29, 0xe7,                    //   USAGE_MAXIMUM (Keyboard Right GUI)
-    0x15, 0x00,                    //   LOGICAL_MINIMUM (0)
-    0x25, 0x01,                    //   LOGICAL_MAXIMUM (1)
-    0x75, 0x01,                    //   REPORT_SIZE (1)
-    0x95, 0x08,                    //   REPORT_COUNT (8)
-    0x81, 0x02,                    //   INPUT (Data,Var,Abs)
-    0x95, 0x01,                    //   REPORT_COUNT (1)
-    0x75, 0x08,                    //   REPORT_SIZE (8)
-    0x81, 0x03,                    //   INPUT (Cnst,Var,Abs)
-    0x95, 0x05,                    //   REPORT_COUNT (5)
-    0x75, 0x01,                    //   REPORT_SIZE (1)
-    0x05, 0x08,                    //   USAGE_PAGE (LEDs)
-    0x19, 0x01,                    //   USAGE_MINIMUM (Num Lock)
-    0x29, 0x05,                    //   USAGE_MAXIMUM (Kana)
-    0x91, 0x02,                    //   OUTPUT (Data,Var,Abs)
-    0x95, 0x01,                    //   REPORT_COUNT (1)
-    0x75, 0x03,                    //   REPORT_SIZE (3)
-    0x91, 0x03,                    //   OUTPUT (Cnst,Var,Abs)
-    0x95, HW_KEYSCAN_PRESS_MAX,    //   REPORT_COUNT (6)
-    0x75, 0x08,                    //   REPORT_SIZE (8)
-    0x15, 0x00,                    //   LOGICAL_MINIMUM (0)
-    0x25, 0x65,                    //   LOGICAL_MAXIMUM (101)
-    0x05, 0x07,                    //   USAGE_PAGE (Keyboard)
-    0x19, 0x00,                    //   USAGE_MINIMUM (Reserved (no event indicated))
-    0x29, 0x65,                    //   USAGE_MAXIMUM (Keyboard Application)
-    0x81, 0x00,                    //   INPUT (Data,Ary,Abs)
-    0xc0                           // END_COLLECTION
+  0x05, 0x01,                         // USAGE_PAGE (Generic Desktop)
+  0x09, 0x06,                         // USAGE (Keyboard)
+  0xa1, 0x01,                         // COLLECTION (Application)
+  0x05, 0x07,                         //   USAGE_PAGE (Keyboard)
+  0x19, 0xe0,                         //   USAGE_MINIMUM (Keyboard LeftControl)
+  0x29, 0xe7,                         //   USAGE_MAXIMUM (Keyboard Right GUI)
+  0x15, 0x00,                         //   LOGICAL_MINIMUM (0)
+  0x25, 0x01,                         //   LOGICAL_MAXIMUM (1)
+  0x75, 0x01,                         //   REPORT_SIZE (1)
+  0x95, 0x08,                         //   REPORT_COUNT (8)
+  0x81, 0x02,                         //   INPUT (Data,Var,Abs)
+  0x95, 0x01,                         //   REPORT_COUNT (1)
+  0x75, 0x08,                         //   REPORT_SIZE (8)
+  0x81, 0x03,                         //   INPUT (Cnst,Var,Abs)
+  0x95, 0x05,                         //   REPORT_COUNT (5)
+  0x75, 0x01,                         //   REPORT_SIZE (1)
+  0x05, 0x08,                         //   USAGE_PAGE (LEDs)
+  0x19, 0x01,                         //   USAGE_MINIMUM (Num Lock)
+  0x29, 0x05,                         //   USAGE_MAXIMUM (Kana)
+  0x91, 0x02,                         //   OUTPUT (Data,Var,Abs)
+  0x95, 0x01,                         //   REPORT_COUNT (1)
+  0x75, 0x03,                         //   REPORT_SIZE (3)
+  0x91, 0x03,                         //   OUTPUT (Cnst,Var,Abs)
+  0x95, HW_KEYSCAN_PRESS_MAX,         //   REPORT_COUNT (6)
+  0x75, 0x08,                         //   REPORT_SIZE (8)
+  0x15, 0x00,                         //   LOGICAL_MINIMUM (0)
+  0x25, 0x65,                         //   LOGICAL_MAXIMUM (101)
+  0x05, 0x07,                         //   USAGE_PAGE (Keyboard)
+  0x19, 0x00,                         //   USAGE_MINIMUM (Reserved (no event indicated))
+  0x29, 0x65,                         //   USAGE_MAXIMUM (Keyboard Application)
+  0x81, 0x00,                         //   INPUT (Data,Ary,Abs)
+  0xc0                                // END_COLLECTION
+};
+
+__ALIGN_BEGIN static uint8_t HID_VIA_ReportDesc[HID_KEYBOARD_VIA_REPORT_DESC_SIZE] __ALIGN_END = 
+{
+  //
+  0x06, 0x60, 0xFF, // Usage Page (Vendor Defined)
+  0x09, 0x61,       // Usage (Vendor Defined)
+  0xA1, 0x01,       // Collection (Application)
+  // Data to host
+  0x09, 0x62,       //   Usage (Vendor Defined)
+  0x15, 0x00,       //   Logical Minimum (0)
+  0x26, 0xFF, 0x00, //   Logical Maximum (255)
+  0x95, 32,         //   Report Count
+  0x75, 0x08,       //   Report Size (8)
+  0x81, 0x02,       //   Input (Data, Variable, Absolute)
+  // Data from host
+  0x09, 0x63,       //   Usage (Vendor Defined)
+  0x15, 0x00,       //   Logical Minimum (0)
+  0x26, 0xFF, 0x00, //   Logical Maximum (255)
+  0x95, 32,         //   Report Count
+  0x75, 0x08,       //   Report Size (8)
+  0x91, 0x02,       //   Output (Data, Variable, Absolute)
+  0xC0              // End Collection
 };
 
 static uint8_t HIDInEpAdd = HID_EPIN_ADDR;
@@ -323,23 +346,28 @@ static uint8_t USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
   pdev->pClassDataCmsit[pdev->classId] = (void *)hhid;
   pdev->pClassData = pdev->pClassDataCmsit[pdev->classId];
 
+
 #ifdef USE_USBD_COMPOSITE
   /* Get the Endpoints addresses allocated for this class instance */
   HIDInEpAdd  = USBD_CoreGetEPAdd(pdev, USBD_EP_IN, USBD_EP_TYPE_INTR, (uint8_t)pdev->classId);
 #endif /* USE_USBD_COMPOSITE */
-
-  if (pdev->dev_speed == USBD_SPEED_HIGH)
-  {
-    pdev->ep_in[HIDInEpAdd & 0xFU].bInterval = HID_HS_BINTERVAL;
-  }
-  else   /* LOW and FULL-speed endpoints */
-  {
-    pdev->ep_in[HIDInEpAdd & 0xFU].bInterval = HID_FS_BINTERVAL;
-  }
+  pdev->ep_in[HIDInEpAdd & 0xFU].bInterval = pdev->dev_speed == USBD_SPEED_HIGH ? HID_HS_BINTERVAL:HID_FS_BINTERVAL;
 
   /* Open EP IN */
   (void)USBD_LL_OpenEP(pdev, HIDInEpAdd, USBD_EP_TYPE_INTR, HID_EPIN_SIZE);
   pdev->ep_in[HIDInEpAdd & 0xFU].is_used = 1U;
+
+
+
+
+  pdev->ep_in[HID_VIA_EP_IN & 0xFU].bInterval = pdev->dev_speed == USBD_SPEED_HIGH ? HID_HS_BINTERVAL:HID_FS_BINTERVAL;
+  (void)USBD_LL_OpenEP(pdev, HID_VIA_EP_IN, USBD_EP_TYPE_INTR, HID_EPIN_SIZE);
+  pdev->ep_in[HID_VIA_EP_IN & 0xFU].is_used = 1U;
+
+  pdev->ep_in[HID_VIA_EP_OUT & 0xFU].bInterval = pdev->dev_speed == USBD_SPEED_HIGH ? HID_HS_BINTERVAL:HID_FS_BINTERVAL;
+  (void)USBD_LL_OpenEP(pdev, HID_VIA_EP_OUT, USBD_EP_TYPE_INTR, HID_EPIN_SIZE);
+  pdev->ep_in[HID_VIA_EP_OUT & 0xFU].is_used = 1U;
+
 
   hhid->state = USBD_HID_IDLE;
 
@@ -410,6 +438,8 @@ static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *re
   logDebug("HID_SETUP %d\n", pdev->classId);
   logDebug("  req->bmRequest : 0x%X\n", req->bmRequest);
   logDebug("  req->bRequest  : 0x%X\n", req->bRequest);
+  logDebug("       wIndex    : 0x%X\n", req->wIndex);
+  logDebug("       wLength   : 0x%X %d\n", req->wLength, req->wLength);
 
   switch (req->bmRequest & USB_REQ_TYPE_MASK)
   {
@@ -476,8 +506,18 @@ static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *re
           logDebug("  USB_REQ_GET_DESCRIPTOR  : 0x%X\n", req->wValue); 
           if ((req->wValue >> 8) == HID_REPORT_DESC)
           {
-            len = MIN(HID_KEYBOARD_REPORT_DESC_SIZE, req->wLength);
-            pbuf = HID_KEYBOARD_ReportDesc;
+            switch(req->wIndex)
+            {
+              case 1:
+                len = MIN(HID_KEYBOARD_VIA_REPORT_DESC_SIZE, req->wLength);
+                pbuf = HID_VIA_ReportDesc;
+                break;
+
+              default:
+                len = MIN(HID_KEYBOARD_REPORT_DESC_SIZE, req->wLength);
+                pbuf = HID_KEYBOARD_ReportDesc;
+              break;
+            }
           }
           else if ((req->wValue >> 8) == HID_DESCRIPTOR_TYPE)
           {

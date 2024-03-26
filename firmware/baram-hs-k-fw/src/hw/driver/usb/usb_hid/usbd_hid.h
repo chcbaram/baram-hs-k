@@ -44,12 +44,17 @@ extern "C" {
 #define HID_EPIN_ADDR                                   0x81U
 #define HID_EPIN_SIZE                                   64U
 
+#define HID_VIA_EP_IN                                   0x84U
+#define HID_VIA_EP_OUT                                  0x04U
+#define HID_VIA_EP_SIZE                                 32U
+
 #define HID_KEYBOARD
 #define USB_HID_CONFIG_DESC_SIZ                         34U
 #define USB_HID_DESC_SIZ                                9U
 
 #define HID_MOUSE_REPORT_DESC_SIZE                      74U
 #define HID_KEYBOARD_REPORT_DESC_SIZE                   63U
+#define HID_KEYBOARD_VIA_REPORT_DESC_SIZE               34U
 
 #define HID_DESCRIPTOR_TYPE                             0x21U
 #define HID_REPORT_DESC                                 0x22U
@@ -65,6 +70,8 @@ extern "C" {
 
 #define USBD_HID_REQ_SET_REPORT                         0x09U
 #define USBD_HID_REQ_GET_REPORT                         0x01U
+
+
 /**
   * @}
   */
