@@ -22,7 +22,7 @@
 #define      HW_UART_CH_CLI         HW_UART_CH_SWD
 
 #define _USE_HW_BUTTON
-#define      HW_BUTTON_MAX_CH       1
+#define      HW_BUTTON_MAX_CH       2
 
 #define _USE_HW_CLI
 #define      HW_CLI_CMD_LIST_MAX    32
@@ -47,9 +47,14 @@
 #define      HW_USB_MSC             0
 #define      HW_USB_HID             1
 
+#define _USE_HW_KEYSCAN
+#define      HW_KEYSCAN_MAX_CH      HW_BUTTON_MAX_CH
+#define      HW_KEYSCAN_PRESS_MAX   6
+
+
 //-- CLI
 //
 #define _USE_CLI_HW_BUTTON          1
-
+#define _USE_CLI_HW_KEYSCAN         1
 
 #endif

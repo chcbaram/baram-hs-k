@@ -16,7 +16,7 @@ extern "C" {
 #include "cdc.h"
 #include "micros.h"
 #include "button.h"
-
+#include "keyscan.h"
 
 bool hwInit(void);
 

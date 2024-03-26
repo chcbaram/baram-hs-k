@@ -46,6 +46,8 @@
 #include "cli.h"
 #include "button.h"
 #include "log.h"
+#include "keyscan.h"
+#include "keyboard/keycode.h"
 
 
 #if HW_USB_LOG == 1
@@ -58,6 +60,10 @@
 #else
 #define logDebug(...) 
 #endif
+
+
+#define HID_KEYBOARD_REPORT_SIZE   (HW_KEYSCAN_PRESS_MAX + 2U)
+
 
 
 static uint8_t USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
@@ -84,6 +90,14 @@ static void cliCmd(cli_args_t *args);
 
 static USBD_SetupReqTypedef ep0_req;
 static uint8_t ep0_req_buf[USB_MAX_EP0_SIZE];
+
+static bool resp_led_req = false;
+static bool resp_led_done = false;
+static bool resp_led_busy = false;
+
+static uint16_t resp_led_cnt;
+static uint32_t resp_led_buf[8];
+static uint32_t resp_led_mode[8];
 
 
 USBD_ClassTypeDef USBD_HID =
@@ -271,7 +285,7 @@ __ALIGN_BEGIN static uint8_t HID_KEYBOARD_ReportDesc[HID_KEYBOARD_REPORT_DESC_SI
     0x95, 0x01,                    //   REPORT_COUNT (1)
     0x75, 0x03,                    //   REPORT_SIZE (3)
     0x91, 0x03,                    //   OUTPUT (Cnst,Var,Abs)
-    0x95, 0x06,                    //   REPORT_COUNT (6)
+    0x95, HW_KEYSCAN_PRESS_MAX,    //   REPORT_COUNT (6)
     0x75, 0x08,                    //   REPORT_SIZE (8)
     0x15, 0x00,                    //   LOGICAL_MINIMUM (0)
     0x25, 0x65,                    //   LOGICAL_MAXIMUM (101)
@@ -424,12 +438,12 @@ static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *re
 
         case USBD_HID_REQ_SET_REPORT:  
           logDebug("  USBD_HID_REQ_SET_REPORT  : 0x%X, 0x%d\n", req->wValue, req->wLength);     
-          {   
-            const uint8_t hid_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+          {
+            const uint8_t hid_buf[HID_KEYBOARD_REPORT_SIZE] = {0, 0, 0, 0, 0, 0, 0, 0};
             #ifdef USE_USBD_COMPOSITE
-            USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8, pdev->classId);      
+            USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, HID_KEYBOARD_REPORT_SIZE, pdev->classId);      
             #else
-            USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8);                
+            USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, HID_KEYBOARD_REPORT_SIZE);                
             #endif
           }
           ep0_req = *req;
@@ -541,6 +555,18 @@ uint8_t USBD_HID_EP0_RxReady(USBD_HandleTypeDef *pdev)
   for (int i=0; i<ep0_req.wLength; i++)
   {
     logDebug("  %d : 0x%02X\n", i, ep0_req_buf[i]);
+  }
+
+  if (resp_led_busy)
+  {
+    if (resp_led_cnt < 8)
+    {
+      resp_led_buf[resp_led_cnt] = micros();
+      resp_led_mode[resp_led_cnt] = 2;
+      resp_led_cnt++;
+    }
+    resp_led_busy = false;
+    resp_led_done = true;
   }
 
   return (uint8_t)USBD_OK;
@@ -694,6 +720,9 @@ static uint32_t rate_time_max = 0;
 static uint32_t rate_time_min_check = 0xFFFF; 
 static uint32_t rate_time_max_check = 0; 
 
+static uint32_t rate_time_sof_pre = 0; 
+static uint32_t rate_time_sof = 0; 
+
 static uint16_t rate_his_buf[100];
 
 /**
@@ -710,25 +739,42 @@ static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
   be caused by  a new transfer before the end of the previous transfer */
   ((USBD_HID_HandleTypeDef *)pdev->pClassDataCmsit[pdev->classId])->state = USBD_HID_IDLE;
 
+  static uint8_t hid_buf[HID_KEYBOARD_REPORT_SIZE] = {0,};
 
-  static uint8_t hid_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
+  keyscanUpdate();
+
+  memset(hid_buf, 0, sizeof(hid_buf));
 
   if (buttonGetPressed(_DEF_BUTTON1))
   {
-    hid_buf[2] = 0x04; // a
+    hid_buf[2] = KC_A;
   }
-  else
+  if (buttonGetPressed(_DEF_BUTTON2))
   {
-    hid_buf[2] = 0x00;
+    hid_buf[3] = KC_B;
+  }
+
+  if (resp_led_req)
+  {
+    hid_buf[2] = KC_NUM_LOCK;
+    resp_led_cnt = 0;
+    resp_led_buf[resp_led_cnt] = micros();
+    resp_led_mode[resp_led_cnt] = 0;
+    resp_led_cnt++;
+    resp_led_busy = true;
+    resp_led_done = false;
+    resp_led_req = false;
   }
 
   #ifdef USE_USBD_COMPOSITE
-  USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8, pdev->classId);  
+  USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, HID_KEYBOARD_REPORT_SIZE, pdev->classId);  
   #else
-  USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, 8);  
+  USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, HID_KEYBOARD_REPORT_SIZE);  
   #endif
   data_in_cnt++;
+
+  rate_time_sof = micros() - rate_time_sof_pre;
 
   uint32_t rate_time_cur;
   
@@ -759,6 +805,8 @@ uint8_t USBD_HID_SOF(USBD_HandleTypeDef *pdev)
 {
   static uint32_t cnt = 0; 
 
+
+  rate_time_sof_pre = micros();
   if (cnt >= 8000)
   {
     cnt = 0;
@@ -771,6 +819,8 @@ uint8_t USBD_HID_SOF(USBD_HandleTypeDef *pdev)
     rate_time_max_check = 0;     
   }  
   cnt++;
+
+  keyscanUpdate();
 
   return (uint8_t)USBD_OK;
 }
@@ -815,10 +865,11 @@ void cliCmd(cli_args_t *args)
       if (millis()-pre_time >= 1000)
       {
         pre_time = millis();
-        cliPrintf("hid rate %d Hz, max %4d us, min %d us\n", 
+        cliPrintf("hid rate %d Hz, max %4d us, min %d us, %d\n", 
           data_in_rate,
           rate_time_max,
-          rate_time_min); 
+          rate_time_min,
+          rate_time_sof); 
       }
     }
 
@@ -832,12 +883,52 @@ void cliCmd(cli_args_t *args)
     ret = true;
   }
 
+  if (args->argc == 1 && args->isStr(0, "resp") == true)
+  {
+    uint32_t pre_time;
+    uint16_t index = 0;
+    uint32_t resp_time_sum = 0;
+    bool keep_loop = true;
+    
+    while(keep_loop)
+    {
+      resp_led_req = true;
+      pre_time = millis();
+      while(millis()-pre_time < 1000)  
+      {
+        if (resp_led_done)
+        {
+          uint32_t resp_time;
+
+          index++;
+          resp_time = resp_led_buf[resp_led_cnt-1] - resp_led_buf[0];
+          resp_time_sum += resp_time;
+          cliPrintf("%d : %d us, avg %d us\n", index, resp_time, resp_time_sum/index);          
+          resp_led_done = false;
+        }
+        if (cliAvailable())
+        {
+          uint8_t rxd;
+
+          rxd = cliRead();
+          if (rxd == 'q')
+          {
+            keep_loop = false;
+            break;
+          }
+        }
+      }
+    }
+    ret = true;
+  }
 
   if (ret == false)
   {
     cliPrintf("usbhid info\n");
     cliPrintf("usbhid rate\n");
     cliPrintf("usbhid rate his\n");
+    cliPrintf("usbhid resp\n");
+
   }
 }
 #endif
