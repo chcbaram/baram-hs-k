@@ -48,6 +48,7 @@
 #include "log.h"
 #include "keyscan.h"
 #include "keyboard/keycode.h"
+#include "via/via.h"
 
 
 #if HW_USB_LOG == 1
@@ -70,6 +71,7 @@ static uint8_t USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 static uint8_t USBD_HID_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum);
+static uint8_t USBD_HID_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum);
 static uint8_t USBD_HID_EP0_RxReady(USBD_HandleTypeDef *pdev);
 static uint8_t USBD_HID_SOF(USBD_HandleTypeDef *pdev);
 
@@ -88,8 +90,11 @@ static uint8_t *USBD_HID_GetUsrStrDescriptor(struct _USBD_HandleTypeDef *pdev, u
 static void cliCmd(cli_args_t *args);
 
 
+
 static USBD_SetupReqTypedef ep0_req;
 static uint8_t ep0_req_buf[USB_MAX_EP0_SIZE];
+
+__ALIGN_BEGIN  static uint8_t usb_hid_via_report[32] __ALIGN_END;
 
 static bool resp_led_req = false;
 static bool resp_led_done = false;
@@ -108,7 +113,7 @@ USBD_ClassTypeDef USBD_HID =
   NULL,                 /* EP0_TxSent */
   USBD_HID_EP0_RxReady, /* EP0_RxReady */
   USBD_HID_DataIn,      /* DataIn */
-  NULL,                 /* DataOut */
+  USBD_HID_DataOut,     /* DataOut */
   USBD_HID_SOF,         /* SOF */
   NULL,
   NULL,
@@ -322,6 +327,7 @@ __ALIGN_BEGIN static uint8_t HID_VIA_ReportDesc[HID_KEYBOARD_VIA_REPORT_DESC_SIZ
 static uint8_t HIDInEpAdd = HID_EPIN_ADDR;
 
 
+
 /**
   * @brief  USBD_HID_Init
   *         Initialize the HID interface
@@ -359,17 +365,19 @@ static uint8_t USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 
 
 
-
   pdev->ep_in[HID_VIA_EP_IN & 0xFU].bInterval = pdev->dev_speed == USBD_SPEED_HIGH ? HID_HS_BINTERVAL:HID_FS_BINTERVAL;
-  (void)USBD_LL_OpenEP(pdev, HID_VIA_EP_IN, USBD_EP_TYPE_INTR, HID_EPIN_SIZE);
+  (void)USBD_LL_OpenEP(pdev, HID_VIA_EP_IN, USBD_EP_TYPE_INTR, HID_VIA_EP_SIZE);
   pdev->ep_in[HID_VIA_EP_IN & 0xFU].is_used = 1U;
 
   pdev->ep_in[HID_VIA_EP_OUT & 0xFU].bInterval = pdev->dev_speed == USBD_SPEED_HIGH ? HID_HS_BINTERVAL:HID_FS_BINTERVAL;
-  (void)USBD_LL_OpenEP(pdev, HID_VIA_EP_OUT, USBD_EP_TYPE_INTR, HID_EPIN_SIZE);
+  (void)USBD_LL_OpenEP(pdev, HID_VIA_EP_OUT, USBD_EP_TYPE_INTR, HID_VIA_EP_SIZE);
   pdev->ep_in[HID_VIA_EP_OUT & 0xFU].is_used = 1U;
 
 
   hhid->state = USBD_HID_IDLE;
+
+  /* Prepare Out endpoint to receive next packet */
+  (void)USBD_LL_PrepareReceive(pdev, HID_VIA_EP_OUT, usb_hid_via_report, 32);
 
 
   static bool is_cli = false;
@@ -472,6 +480,12 @@ static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *re
             const uint8_t hid_buf[HID_KEYBOARD_REPORT_SIZE] = {0, 0, 0, 0, 0, 0, 0, 0};
             #ifdef USE_USBD_COMPOSITE
             USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, HID_KEYBOARD_REPORT_SIZE, pdev->classId);      
+
+                /* Prepare Out endpoint to receive next packet */
+            // static uint8_t via_buf[32] = {0,};
+            // (void)USBD_LL_PrepareReceive(pdev, HID_VIA_EP_OUT, via_buf, 32);
+            // (void)USBD_LL_Transmit(pdev, HID_VIA_EP_IN, via_buf, 32);
+
             #else
             USBD_HID_SendReport(pdev, (uint8_t *)hid_buf, HID_KEYBOARD_REPORT_SIZE);                
             #endif
@@ -781,7 +795,11 @@ static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 
   static uint8_t hid_buf[HID_KEYBOARD_REPORT_SIZE] = {0,};
 
-
+  if (epnum != (HID_EPIN_ADDR & 0x0F))
+  {
+    return (uint8_t)USBD_OK;
+  }
+  
   keyscanUpdate();
 
   memset(hid_buf, 0, sizeof(hid_buf));
@@ -841,6 +859,28 @@ static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
   return (uint8_t)USBD_OK;
 }
 
+static uint8_t USBD_HID_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
+{
+  USBD_HID_HandleTypeDef *hhid = (USBD_HID_HandleTypeDef *)pdev->pClassDataCmsit[pdev->classId];
+
+  if (hhid == NULL)
+  {
+    return (uint8_t)USBD_FAIL;
+  }
+
+  /* Get the received data length */
+  uint32_t rx_size;
+  rx_size = USBD_LL_GetRxDataSize(pdev, epnum);
+
+  viaHidReceive(usb_hid_via_report, rx_size);
+
+  USBD_LL_Transmit(pdev, HID_VIA_EP_OUT, usb_hid_via_report, sizeof(usb_hid_via_report));
+
+  USBD_LL_PrepareReceive(pdev, HID_VIA_EP_OUT, usb_hid_via_report, sizeof(usb_hid_via_report));
+
+  return (uint8_t)USBD_OK;
+}
+
 uint8_t USBD_HID_SOF(USBD_HandleTypeDef *pdev)
 {
   static uint32_t cnt = 0; 
@@ -879,7 +919,6 @@ static uint8_t *USBD_HID_GetDeviceQualifierDesc(uint16_t *length)
   return USBD_HID_DeviceQualifierDesc;
 }
 #endif /* USE_USBD_COMPOSITE  */
-
 
 
 

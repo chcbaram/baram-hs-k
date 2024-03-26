@@ -279,7 +279,7 @@ uint8_t  USBD_CMPSIT_AddToConfDesc(USBD_HandleTypeDef *pdev)
 #if USBD_CMPSIT_ACTIVATE_HID == 1
     case CLASS_TYPE_HID:
       /* Setup Max packet sizes (for HID, no dependency on USB Speed, both HS/FS have same packet size) */
-      pdev->tclasslist[pdev->classId].CurrPcktSze = HID_EPIN_SIZE;
+      pdev->tclasslist[pdev->classId].CurrPcktSze = HID_EP_SIZE;
 
       /* Find the first available interface slot and Assign number of interfaces */
       idxIf = USBD_CMPSIT_FindFreeIFNbr(pdev);
@@ -296,11 +296,11 @@ uint8_t  USBD_CMPSIT_AddToConfDesc(USBD_HandleTypeDef *pdev)
 
       /* Set VIA IN endpoint slot */
       iEp = pdev->tclasslist[pdev->classId].EpAdd[1];
-      USBD_CMPSIT_AssignEp(pdev, iEp, USBD_EP_TYPE_INTR, pdev->tclasslist[pdev->classId].CurrPcktSze);
+      USBD_CMPSIT_AssignEp(pdev, iEp, USBD_EP_TYPE_INTR, HID_VIA_EP_SIZE);
 
       /* Set VIA OUT endpoint slot */
       iEp = pdev->tclasslist[pdev->classId].EpAdd[2];
-      USBD_CMPSIT_AssignEp(pdev, iEp, USBD_EP_TYPE_INTR, pdev->tclasslist[pdev->classId].CurrPcktSze);
+      USBD_CMPSIT_AssignEp(pdev, iEp, USBD_EP_TYPE_INTR, HID_VIA_EP_SIZE);
 
       /* Configure and Append the Descriptor */
       USBD_CMPSIT_HIDKeyboardDesc(pdev, (uint32_t)pCmpstFSConfDesc, &CurrFSConfDescSz, (uint8_t)USBD_SPEED_FULL);
@@ -875,6 +875,7 @@ static void  USBD_CMPSIT_HIDKeyboardDesc(USBD_HandleTypeDef *pdev, uint32_t pCon
   pHidKeyboardDesc->bHIDDescriptorType  = 0x22U;
   pHidKeyboardDesc->wItemLength         = HID_KEYBOARD_VIA_REPORT_DESC_SIZE;
   *Sze                                 += (uint32_t)sizeof(USBD_HIDDescTypeDef);
+
 
   /* Append Endpoint descriptor to Configuration descriptor */
   __USBD_CMPSIT_SET_EP(pdev->tclasslist[pdev->classId].Eps[1].add, USBD_EP_TYPE_INTR, HID_VIA_EP_SIZE, \
