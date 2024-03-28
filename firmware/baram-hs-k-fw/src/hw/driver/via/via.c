@@ -12,9 +12,6 @@ static const char *command_id_str[] =
   [id_custom_set_value]                     = "id_custom_set_value",
   [id_custom_get_value]                     = "id_custom_get_value",
   [id_custom_save]                          = "id_custom_save",
-  [id_lighting_set_value]                   = "id_lighting_set_value",
-  [id_lighting_get_value]                   = "id_lighting_get_value",
-  [id_lighting_save]                        = "id_lighting_save",
   [id_eeprom_reset]                         = "id_eeprom_reset",
   [id_bootloader_jump]                      = "id_bootloader_jump",
   [id_dynamic_keymap_macro_get_count]       = "id_dynamic_keymap_macro_get_count",
@@ -25,11 +22,13 @@ static const char *command_id_str[] =
   [id_dynamic_keymap_get_layer_count]       = "id_dynamic_keymap_get_layer_count",
   [id_dynamic_keymap_get_buffer]            = "id_dynamic_keymap_get_buffer",
   [id_dynamic_keymap_set_buffer]            = "id_dynamic_keymap_set_buffer",
+  [id_dynamic_keymap_get_encoder]           = "id_dynamic_keymap_get_encoder",
+  [id_dynamic_keymap_set_encoder]           = "id_dynamic_keymap_set_encoder",
   [id_vial_prefix]                          = "id_vial_prefix",
   [id_unhandled]                            = "id_unhandled",
 };
 
-#define MATRIX_ROWS                         6
+#define MATRIX_ROWS                         5
 #define MATRIX_COLS                         15
 
 #define DYNAMIC_KEYMAP_MACRO_EEPROM_ADDR    0
@@ -71,6 +70,7 @@ static matrix_row_t matrix_get_row(uint8_t row);
 static uint32_t     via_get_layout_options(void);
 static void         raw_hid_receive_kb(uint8_t *data, uint8_t length);
 static void         viaHidCmdPrint(uint8_t *data, uint8_t length, bool is_resp);
+static bool         viaHidCustomCmd(uint8_t *data, uint8_t length);
 
 static void         dynamic_keymap_macro_get_buffer(uint16_t offset, uint16_t size, uint8_t *data);
 static void         dynamic_keymap_get_buffer(uint16_t offset, uint16_t size, uint8_t *data);
@@ -223,6 +223,14 @@ void viaHidReceive(uint8_t *data, uint8_t length)
         break;
       }
 
+    case id_custom_set_value:
+    case id_custom_get_value:
+    case id_custom_save:
+      {
+        is_resp = viaHidCustomCmd(data, length);
+        break;
+      }
+
     default:
       is_resp = false;
       break;
@@ -236,6 +244,47 @@ void viaHidReceive(uint8_t *data, uint8_t length)
   }
 }
 
+bool viaHidCustomCmd(uint8_t *data, uint8_t length)
+{
+  uint8_t *command_id = &(data[0]);
+  uint8_t *channel_id = &(data[1]);
+  uint8_t *value_id   = &(data[2]);
+  uint8_t *value_data = &(data[3]);
+
+
+  if (*channel_id == 3)
+  {
+    static uint8_t value = 0;
+
+    switch (*command_id)
+    {
+      case id_custom_set_value:
+        {
+          value = value_data[0];
+          break;
+        }
+      case id_custom_get_value:
+        {
+          value_data[0] = value;
+          break;
+        }
+      case id_custom_save:
+        {
+          break;
+        }
+      default:
+        {
+          *command_id = id_unhandled;
+          break;
+        }
+    }
+    return true;
+  }
+  // raw_hid_receive_kb(data, length); 
+
+  return false;
+}
+
 void viaHidCmdPrint(uint8_t *data, uint8_t length, bool is_resp)
 {
   uint8_t *command_id   = &(data[0]);
@@ -243,9 +292,10 @@ void viaHidCmdPrint(uint8_t *data, uint8_t length, bool is_resp)
   uint8_t data_len = length - 1;
 
 
-  logPrintf("[%s] id : 0x%02X, len %d,  %s",
+  logPrintf("[%s] id : 0x%02X, 0x%02X, len %d,  %s",
             is_resp == true ? "OK" : "  ",
             *command_id,
+            command_data[0],
             length,
             command_id_str[*command_id]);
 

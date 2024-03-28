@@ -52,7 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Size of EEPROM dedicated to keyboard- and user-specific data
 #ifndef EECONFIG_KB_DATA_SIZE
-#define EECONFIG_KB_DATA_SIZE 512
+#define EECONFIG_KB_DATA_SIZE 0
 #endif
 #ifndef EECONFIG_KB_DATA_VERSION
 #define EECONFIG_KB_DATA_VERSION (EECONFIG_KB_DATA_SIZE)
